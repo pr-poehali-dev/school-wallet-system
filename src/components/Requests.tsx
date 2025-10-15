@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -7,6 +7,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import Icon from '@/components/ui/icon';
 import { toast } from '@/components/ui/use-toast';
 import { Badge } from '@/components/ui/badge';
+import { storage } from '@/lib/storage';
 
 interface RequestsProps {
   user: any;
@@ -15,6 +16,23 @@ interface RequestsProps {
 export default function Requests({ user }: RequestsProps) {
   const [depositAmount, setDepositAmount] = useState('');
   const [withdrawAmount, setWithdrawAmount] = useState('');
+  const [userRequests, setUserRequests] = useState<any[]>([]);
+
+  useEffect(() => {
+    loadUserRequests();
+  }, [user]);
+
+  const loadUserRequests = () => {
+    const deposits = storage.getDepositRequests().filter(req => req.userId === user?.fullName);
+    const withdrawals = storage.getWithdrawalRequests().filter(req => req.userId === user?.fullName);
+    
+    const combined = [
+      ...deposits.map(d => ({ ...d, type: 'deposit' })),
+      ...withdrawals.map(w => ({ ...w, type: 'withdrawal' }))
+    ].sort((a, b) => b.id - a.id);
+    
+    setUserRequests(combined);
+  };
 
   const handleDepositRequest = () => {
     const amount = parseFloat(depositAmount);
@@ -27,11 +45,18 @@ export default function Requests({ user }: RequestsProps) {
       return;
     }
 
+    storage.addDepositRequest({
+      userId: user?.fullName || '',
+      userName: user?.fullName || '',
+      amount,
+    });
+
     toast({
       title: 'Заявка отправлена',
       description: `Запрос на пополнение ₽${amount.toFixed(2)} отправлен персоналу`,
     });
     setDepositAmount('');
+    loadUserRequests();
   };
 
   const handleWithdrawRequest = () => {
@@ -54,36 +79,19 @@ export default function Requests({ user }: RequestsProps) {
       return;
     }
 
+    storage.addWithdrawalRequest({
+      userId: user?.fullName || '',
+      userName: user?.fullName || '',
+      amount,
+    });
+
     toast({
       title: 'Заявка отправлена',
       description: 'Заберите средства в школе после одобрения',
     });
     setWithdrawAmount('');
+    loadUserRequests();
   };
-
-  const mockRequests = [
-    {
-      id: 1,
-      type: 'deposit',
-      amount: 500,
-      status: 'pending',
-      date: '2025-10-13',
-    },
-    {
-      id: 2,
-      type: 'withdrawal',
-      amount: 200,
-      status: 'approved',
-      date: '2025-10-12',
-    },
-    {
-      id: 3,
-      type: 'deposit',
-      amount: 1000,
-      status: 'approved',
-      date: '2025-10-10',
-    },
-  ];
 
   return (
     <div className="max-w-3xl mx-auto space-y-6">
@@ -177,52 +185,64 @@ export default function Requests({ user }: RequestsProps) {
               <CardTitle>Мои заявки</CardTitle>
             </CardHeader>
             <CardContent className="space-y-3">
-              {mockRequests.map((request) => (
-                <div
-                  key={request.id}
-                  className="flex items-center justify-between p-4 rounded-lg border bg-card hover:bg-accent/5 transition-colors"
-                >
-                  <div className="flex items-center gap-3">
-                    <div
-                      className={`p-2 rounded-lg ${
-                        request.type === 'deposit' ? 'bg-accent/10' : 'bg-primary/10'
-                      }`}
-                    >
-                      <Icon
-                        name={request.type === 'deposit' ? 'ArrowUp' : 'ArrowDown'}
-                        size={20}
-                        className={request.type === 'deposit' ? 'text-accent' : 'text-primary'}
-                      />
-                    </div>
-                    <div>
-                      <p className="font-semibold">
-                        {request.type === 'deposit' ? 'Пополнение' : 'Вывод'}
-                      </p>
-                      <p className="text-sm text-muted-foreground">{request.date}</p>
-                    </div>
-                  </div>
-                  <div className="text-right flex items-center gap-3">
-                    <div>
-                      <p className="font-bold">₽{request.amount}</p>
-                      <Badge
-                        variant={
-                          request.status === 'approved'
-                            ? 'default'
-                            : request.status === 'pending'
-                            ? 'secondary'
-                            : 'destructive'
-                        }
-                      >
-                        {request.status === 'approved'
-                          ? 'Одобрено'
-                          : request.status === 'pending'
-                          ? 'В обработке'
-                          : 'Отклонено'}
-                      </Badge>
-                    </div>
-                  </div>
+              {userRequests.length === 0 ? (
+                <div className="py-12 text-center">
+                  <Icon name="Inbox" size={48} className="mx-auto mb-4 text-muted-foreground" />
+                  <p className="text-lg font-semibold text-muted-foreground mb-2">
+                    Заявок пока нет
+                  </p>
+                  <p className="text-sm text-muted-foreground">
+                    Создайте первую заявку на пополнение или вывод
+                  </p>
                 </div>
-              ))}
+              ) : (
+                userRequests.map((request) => (
+                  <div
+                    key={request.id}
+                    className="flex items-center justify-between p-4 rounded-lg border bg-card hover:bg-accent/5 transition-colors"
+                  >
+                    <div className="flex items-center gap-3">
+                      <div
+                        className={`p-2 rounded-lg ${
+                          request.type === 'deposit' ? 'bg-accent/10' : 'bg-primary/10'
+                        }`}
+                      >
+                        <Icon
+                          name={request.type === 'deposit' ? 'ArrowUp' : 'ArrowDown'}
+                          size={20}
+                          className={request.type === 'deposit' ? 'text-accent' : 'text-primary'}
+                        />
+                      </div>
+                      <div>
+                        <p className="font-semibold">
+                          {request.type === 'deposit' ? 'Пополнение' : 'Вывод'}
+                        </p>
+                        <p className="text-sm text-muted-foreground">{request.date}</p>
+                      </div>
+                    </div>
+                    <div className="text-right flex items-center gap-3">
+                      <div>
+                        <p className="font-bold">₽{request.amount}</p>
+                        <Badge
+                          variant={
+                            request.status === 'approved'
+                              ? 'default'
+                              : request.status === 'pending'
+                              ? 'secondary'
+                              : 'destructive'
+                          }
+                        >
+                          {request.status === 'approved'
+                            ? 'Одобрено'
+                            : request.status === 'pending'
+                            ? 'В обработке'
+                            : 'Отклонено'}
+                        </Badge>
+                      </div>
+                    </div>
+                  </div>
+                ))
+              )}
             </CardContent>
           </Card>
         </TabsContent>

@@ -219,7 +219,7 @@ export default function Index() {
           </TabsList>
 
           <TabsContent value="dashboard" className="mt-6 animate-fade-in">
-            <Dashboard user={user} />
+            <Dashboard user={user} onNavigate={setActiveTab} />
           </TabsContent>
 
           <TabsContent value="casino" className="mt-6 animate-fade-in">

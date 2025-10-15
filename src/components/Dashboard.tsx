@@ -4,9 +4,10 @@ import Icon from '@/components/ui/icon';
 
 interface DashboardProps {
   user: any;
+  onNavigate: (tab: string) => void;
 }
 
-export default function Dashboard({ user }: DashboardProps) {
+export default function Dashboard({ user, onNavigate }: DashboardProps) {
   const balance = user?.balance || 0;
 
   return (
@@ -19,11 +20,19 @@ export default function Dashboard({ user }: DashboardProps) {
           </div>
           <div className="text-5xl font-bold mb-4">₽{balance.toFixed(2)}</div>
           <div className="flex gap-2">
-            <Button variant="secondary" className="flex-1">
+            <Button 
+              variant="secondary" 
+              className="flex-1"
+              onClick={() => onNavigate('requests')}
+            >
               <Icon name="Plus" size={18} className="mr-2" />
               Пополнить
             </Button>
-            <Button variant="secondary" className="flex-1">
+            <Button 
+              variant="secondary" 
+              className="flex-1"
+              onClick={() => onNavigate('requests')}
+            >
               <Icon name="Minus" size={18} className="mr-2" />
               Вывести
             </Button>
@@ -40,8 +49,8 @@ export default function Dashboard({ user }: DashboardProps) {
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-accent">+₽500</div>
-            <p className="text-sm text-muted-foreground">2 дня назад</p>
+            <div className="text-2xl font-bold text-muted-foreground">₽0</div>
+            <p className="text-sm text-muted-foreground">Нет данных</p>
           </CardContent>
         </Card>
 
@@ -53,7 +62,7 @@ export default function Dashboard({ user }: DashboardProps) {
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-secondary">₽1,250</div>
+            <div className="text-2xl font-bold text-muted-foreground">₽0</div>
             <p className="text-sm text-muted-foreground">За всё время</p>
           </CardContent>
         </Card>
@@ -66,7 +75,7 @@ export default function Dashboard({ user }: DashboardProps) {
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-primary">42</div>
+            <div className="text-2xl font-bold text-muted-foreground">0</div>
             <p className="text-sm text-muted-foreground">В этом месяце</p>
           </CardContent>
         </Card>
@@ -80,19 +89,35 @@ export default function Dashboard({ user }: DashboardProps) {
           </CardTitle>
         </CardHeader>
         <CardContent className="grid grid-cols-2 gap-4">
-          <Button variant="outline" className="h-20 flex-col gap-2">
+          <Button 
+            variant="outline" 
+            className="h-20 flex-col gap-2"
+            onClick={() => onNavigate('requests')}
+          >
             <Icon name="ArrowUp" size={24} />
             <span>Запросить пополнение</span>
           </Button>
-          <Button variant="outline" className="h-20 flex-col gap-2">
+          <Button 
+            variant="outline" 
+            className="h-20 flex-col gap-2"
+            onClick={() => onNavigate('requests')}
+          >
             <Icon name="ArrowDown" size={24} />
             <span>Запросить вывод</span>
           </Button>
-          <Button variant="outline" className="h-20 flex-col gap-2">
+          <Button 
+            variant="outline" 
+            className="h-20 flex-col gap-2"
+            onClick={() => onNavigate('casino')}
+          >
             <Icon name="Dices" size={24} />
             <span>Играть в казино</span>
           </Button>
-          <Button variant="outline" className="h-20 flex-col gap-2">
+          <Button 
+            variant="outline" 
+            className="h-20 flex-col gap-2"
+            onClick={() => onNavigate('history')}
+          >
             <Icon name="History" size={24} />
             <span>История операций</span>
           </Button>
