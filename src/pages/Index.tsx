@@ -9,6 +9,7 @@ import Dashboard from '@/components/Dashboard';
 import Casino from '@/components/Casino';
 import Requests from '@/components/Requests';
 import Profile from '@/components/Profile';
+import Leaderboard from '@/components/Leaderboard';
 import { storage } from '@/lib/storage';
 import { userStorage } from '@/lib/userStorage';
 
@@ -167,7 +168,7 @@ export default function Index() {
 
       <div className="container mx-auto px-4 py-8">
         <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-          <TabsList className="grid w-full grid-cols-4 lg:grid-cols-4 bg-white/80 backdrop-blur-lg p-1 h-auto">
+          <TabsList className="grid w-full grid-cols-5 lg:grid-cols-5 bg-white/80 backdrop-blur-lg p-1 h-auto">
             <TabsTrigger value="dashboard" className="flex flex-col gap-1 py-3">
               <Icon name="LayoutDashboard" size={20} />
               <span className="text-xs">Главная</span>
@@ -175,6 +176,10 @@ export default function Index() {
             <TabsTrigger value="casino" className="flex flex-col gap-1 py-3">
               <Icon name="Dices" size={20} />
               <span className="text-xs">Казино</span>
+            </TabsTrigger>
+            <TabsTrigger value="leaderboard" className="flex flex-col gap-1 py-3">
+              <Icon name="Trophy" size={20} />
+              <span className="text-xs">Рейтинг</span>
             </TabsTrigger>
             <TabsTrigger value="requests" className="flex flex-col gap-1 py-3">
               <Icon name="ArrowDownUp" size={20} />
@@ -192,6 +197,10 @@ export default function Index() {
 
           <TabsContent value="casino" className="mt-6 animate-fade-in">
             <Casino user={user} />
+          </TabsContent>
+
+          <TabsContent value="leaderboard" className="mt-6 animate-fade-in">
+            <Leaderboard currentUser={user} />
           </TabsContent>
 
           <TabsContent value="requests" className="mt-6 animate-fade-in">
