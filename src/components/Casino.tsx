@@ -5,6 +5,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import Icon from '@/components/ui/icon';
 import { toast } from '@/components/ui/use-toast';
+import { storage } from '@/lib/storage';
 
 interface CasinoProps {
   user: any;
@@ -44,17 +45,20 @@ export default function Casino({ user }: CasinoProps) {
       setIsSpinning(false);
 
       if (isWin) {
+        storage.updateUserBalance(user?.fullName, amount * 2);
         toast({
           title: '🎉 Победа!',
           description: `Вы выиграли ₽${(amount * 2).toFixed(2)}!`,
         });
       } else {
+        storage.updateUserBalance(user?.fullName, -amount);
         toast({
           title: '😔 Проигрыш',
           description: `Вы проиграли ₽${amount.toFixed(2)}`,
           variant: 'destructive',
         });
       }
+      setBetAmount('');
     }, 3000);
   };
 

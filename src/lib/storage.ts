@@ -67,6 +67,13 @@ export const storage = {
       req.id === id ? { ...req, status } : req
     );
     storage.setDepositRequests(updated);
+    
+    if (status === 'approved') {
+      const request = requests.find(req => req.id === id);
+      if (request) {
+        storage.updateUserBalance(request.userId, request.amount);
+      }
+    }
   },
 
   updateWithdrawalRequestStatus: (id: number, status: 'approved' | 'rejected') => {
@@ -75,5 +82,29 @@ export const storage = {
       req.id === id ? { ...req, status } : req
     );
     storage.setWithdrawalRequests(updated);
+    
+    if (status === 'approved') {
+      const request = requests.find(req => req.id === id);
+      if (request) {
+        storage.updateUserBalance(request.userId, -request.amount);
+      }
+    }
+  },
+
+  getUserBalance: (userId: string): number => {
+    const balances = JSON.parse(localStorage.getItem('userBalances') || '{}');
+    return balances[userId] || 0;
+  },
+
+  updateUserBalance: (userId: string, amount: number) => {
+    const balances = JSON.parse(localStorage.getItem('userBalances') || '{}');
+    balances[userId] = (balances[userId] || 0) + amount;
+    localStorage.setItem('userBalances', JSON.stringify(balances));
+  },
+
+  setUserBalance: (userId: string, balance: number) => {
+    const balances = JSON.parse(localStorage.getItem('userBalances') || '{}');
+    balances[userId] = balance;
+    localStorage.setItem('userBalances', JSON.stringify(balances));
   },
 };

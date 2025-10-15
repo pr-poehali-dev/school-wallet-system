@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -10,6 +10,7 @@ import Casino from '@/components/Casino';
 import Requests from '@/components/Requests';
 import History from '@/components/History';
 import StaffPanel from '@/components/StaffPanel';
+import { storage } from '@/lib/storage';
 
 export default function Index() {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
@@ -32,9 +33,20 @@ export default function Index() {
       return;
     }
 
-    setUser({ fullName, balance: 0 });
+    const balance = storage.getUserBalance(fullName);
+    setUser({ fullName, balance });
     setIsAuthenticated(true);
   };
+
+  useEffect(() => {
+    if (user && !isStaffMode) {
+      const interval = setInterval(() => {
+        const balance = storage.getUserBalance(user.fullName);
+        setUser((prev: any) => ({ ...prev, balance }));
+      }, 1000);
+      return () => clearInterval(interval);
+    }
+  }, [user, isStaffMode]);
 
   const handleStaffLogin = async () => {
     if (fullName === 'admin' && pinCode === 'admin123') {
