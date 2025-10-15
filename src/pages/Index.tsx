@@ -1,20 +1,19 @@
 import { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import Icon from '@/components/ui/icon';
 import Dashboard from '@/components/Dashboard';
 import Casino from '@/components/Casino';
 import Requests from '@/components/Requests';
 import History from '@/components/History';
-import StaffPanel from '@/components/StaffPanel';
 import { storage } from '@/lib/storage';
 
 export default function Index() {
+  const navigate = useNavigate();
   const [isAuthenticated, setIsAuthenticated] = useState(false);
-  const [isStaffMode, setIsStaffMode] = useState(false);
   const [user, setUser] = useState<any>(null);
   const [activeTab, setActiveTab] = useState('dashboard');
 
@@ -39,23 +38,14 @@ export default function Index() {
   };
 
   useEffect(() => {
-    if (user && !isStaffMode) {
+    if (user) {
       const interval = setInterval(() => {
         const balance = storage.getUserBalance(user.fullName);
         setUser((prev: any) => ({ ...prev, balance }));
       }, 1000);
       return () => clearInterval(interval);
     }
-  }, [user, isStaffMode]);
-
-  const handleStaffLogin = async () => {
-    if (fullName === 'admin' && pinCode === 'admin123') {
-      setIsStaffMode(true);
-      setIsAuthenticated(true);
-    } else {
-      alert('Неверные данные персонала');
-    }
-  };
+  }, [user]);
 
   if (!isAuthenticated) {
     return (
@@ -71,111 +61,62 @@ export default function Index() {
             <p className="text-muted-foreground">Зовская платёжная система</p>
           </div>
 
-          <Tabs defaultValue="client" className="w-full">
-            <TabsList className="grid w-full grid-cols-2 mb-6">
-              <TabsTrigger value="client" className="flex items-center gap-2">
-                <Icon name="User" size={16} />
-                Клиент
-              </TabsTrigger>
-              <TabsTrigger value="staff" className="flex items-center gap-2">
-                <Icon name="Shield" size={16} />
-                Персонал
-              </TabsTrigger>
-            </TabsList>
-
-            <TabsContent value="client">
-              <div className="space-y-4">
-                <div className="space-y-2">
-                  <Label htmlFor="fullName">ФИО</Label>
-                  <Input
-                    id="fullName"
-                    placeholder="Иванов Иван Иванович"
-                    value={fullName}
-                    onChange={(e) => setFullName(e.target.value)}
-                    className="h-12"
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="pinCode">PIN-код (4 цифры)</Label>
-                  <Input
-                    id="pinCode"
-                    type="password"
-                    maxLength={4}
-                    placeholder="••••"
-                    value={pinCode}
-                    onChange={(e) => setPinCode(e.target.value.replace(/\D/g, ''))}
-                    className="h-12"
-                  />
-                </div>
-                <div className="flex gap-2">
-                  <Button
-                    onClick={() => {
-                      setIsRegistering(false);
-                      handleAuth();
-                    }}
-                    className="flex-1 h-12 bg-gradient-to-r from-primary to-secondary hover:opacity-90 transition-opacity"
-                  >
-                    Войти
-                  </Button>
-                  <Button
-                    onClick={() => {
-                      setIsRegistering(true);
-                      handleAuth();
-                    }}
-                    variant="outline"
-                    className="flex-1 h-12"
-                  >
-                    Регистрация
-                  </Button>
-                </div>
-              </div>
-            </TabsContent>
-
-            <TabsContent value="staff">
-              <div className="space-y-4">
-                <div className="space-y-2">
-                  <Label htmlFor="staffLogin">Логин</Label>
-                  <Input
-                    id="staffLogin"
-                    placeholder="admin"
-                    value={fullName}
-                    onChange={(e) => setFullName(e.target.value)}
-                    className="h-12"
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="staffPassword">Пароль</Label>
-                  <Input
-                    id="staffPassword"
-                    type="password"
-                    placeholder="••••••••"
-                    value={pinCode}
-                    onChange={(e) => setPinCode(e.target.value)}
-                    className="h-12"
-                  />
-                </div>
-                <Button
-                  onClick={handleStaffLogin}
-                  className="w-full h-12 bg-gradient-to-r from-primary to-secondary hover:opacity-90 transition-opacity"
-                >
-                  <Icon name="Shield" size={20} className="mr-2" />
-                  Войти в панель персонала
-                </Button>
-              </div>
-            </TabsContent>
-          </Tabs>
+          <div className="space-y-4">
+            <div className="space-y-2">
+              <Label htmlFor="fullName">ФИО</Label>
+              <Input
+                id="fullName"
+                placeholder="Иванов Иван Иванович"
+                value={fullName}
+                onChange={(e) => setFullName(e.target.value)}
+                className="h-12"
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="pinCode">PIN-код (4 цифры)</Label>
+              <Input
+                id="pinCode"
+                type="password"
+                maxLength={4}
+                placeholder="••••"
+                value={pinCode}
+                onChange={(e) => setPinCode(e.target.value.replace(/\D/g, ''))}
+                className="h-12"
+              />
+            </div>
+            <div className="flex gap-2">
+              <Button
+                onClick={() => {
+                  setIsRegistering(false);
+                  handleAuth();
+                }}
+                className="flex-1 h-12 bg-gradient-to-r from-primary to-secondary hover:opacity-90 transition-opacity"
+              >
+                Войти
+              </Button>
+              <Button
+                onClick={() => {
+                  setIsRegistering(true);
+                  handleAuth();
+                }}
+                variant="outline"
+                className="flex-1 h-12"
+              >
+                Регистрация
+              </Button>
+            </div>
+            <Button
+              onClick={() => navigate('/staff-login')}
+              variant="ghost"
+              className="w-full"
+            >
+              <Icon name="Shield" size={18} className="mr-2" />
+              Вход для персонала
+            </Button>
+          </div>
         </Card>
       </div>
     );
-  }
-
-  if (isStaffMode) {
-    return <StaffPanel onLogout={() => {
-      setIsAuthenticated(false);
-      setIsStaffMode(false);
-      setFullName('');
-      setPinCode('');
-    }} />;
   }
 
   return (
@@ -211,7 +152,7 @@ export default function Index() {
 
       <div className="container mx-auto px-4 py-8">
         <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-          <TabsList className="grid w-full grid-cols-4 lg:grid-cols-4 bg-white/80 backdrop-blur-lg p-1 h-auto">
+          <TabsList className="grid w-full grid-cols-3 lg:grid-cols-3 bg-white/80 backdrop-blur-lg p-1 h-auto">
             <TabsTrigger value="dashboard" className="flex flex-col gap-1 py-3">
               <Icon name="LayoutDashboard" size={20} />
               <span className="text-xs">Главная</span>
@@ -223,10 +164,6 @@ export default function Index() {
             <TabsTrigger value="requests" className="flex flex-col gap-1 py-3">
               <Icon name="ArrowDownUp" size={20} />
               <span className="text-xs">Заявки</span>
-            </TabsTrigger>
-            <TabsTrigger value="history" className="flex flex-col gap-1 py-3">
-              <Icon name="History" size={20} />
-              <span className="text-xs">История</span>
             </TabsTrigger>
           </TabsList>
 
@@ -240,10 +177,6 @@ export default function Index() {
 
           <TabsContent value="requests" className="mt-6 animate-fade-in">
             <Requests user={user} />
-          </TabsContent>
-
-          <TabsContent value="history" className="mt-6 animate-fade-in">
-            <History user={user} />
           </TabsContent>
         </Tabs>
       </div>
