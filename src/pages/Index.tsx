@@ -54,9 +54,9 @@ export default function Index() {
               <Icon name="Wallet" size={48} className="text-white" />
             </div>
             <h1 className="text-4xl font-bold bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent mb-2">
-              SCHOOL BANK
+              ZOV BANK
             </h1>
-            <p className="text-muted-foreground">Школьная платёжная система</p>
+            <p className="text-muted-foreground">Зовская платёжная система</p>
           </div>
 
           <Tabs defaultValue="client" className="w-full">
@@ -177,7 +177,7 @@ export default function Index() {
               </div>
               <div>
                 <h1 className="text-xl font-bold bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent">
-                  SCHOOL BANK
+                  ZOV BANK
                 </h1>
                 <p className="text-sm text-muted-foreground">{user?.fullName}</p>
               </div>
