@@ -4,7 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import Icon from '@/components/ui/icon';
-import { userStorage } from '@/lib/userStorage';
+import { storage } from '@/lib/storage';
 
 interface RouletteGameProps {
   user: {
@@ -33,7 +33,7 @@ export default function RouletteGame({ user }: RouletteGameProps) {
       return;
     }
 
-    userStorage.updateBalance(user.fullName, -amount);
+    storage.updateUserBalance(user.fullName, -amount);
     
     setIsSpinning(true);
     setResult(null);
@@ -45,10 +45,10 @@ export default function RouletteGame({ user }: RouletteGameProps) {
       setIsSpinning(false);
 
       if (isWin) {
-        userStorage.updateBalance(user.fullName, amount * 2);
+        storage.updateUserBalance(user.fullName, amount * 2);
         setMessage(`🎉 Победа! Вы выиграли ${amount * 2} 💎`);
         
-        userStorage.addTransaction(user.fullName, {
+        storage.addTransaction(user.fullName, {
           type: 'game',
           amount: amount,
           description: 'Рулетка (Выигрыш)',
@@ -57,7 +57,7 @@ export default function RouletteGame({ user }: RouletteGameProps) {
       } else {
         setMessage(`😔 Проигрыш! Вы потеряли ${amount} 💎`);
         
-        userStorage.addTransaction(user.fullName, {
+        storage.addTransaction(user.fullName, {
           type: 'game',
           amount: -amount,
           description: 'Рулетка (Проигрыш)',

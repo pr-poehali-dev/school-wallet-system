@@ -4,7 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import Icon from '@/components/ui/icon';
-import { userStorage } from '@/lib/userStorage';
+import { storage } from '@/lib/storage';
 
 interface CrashGameProps {
   user: {
@@ -45,7 +45,7 @@ export default function CrashGame({ user }: CrashGameProps) {
       return;
     }
 
-    userStorage.updateBalance(user.fullName, -bet);
+    storage.updateUserBalance(user.fullName, -bet);
     
     const willCrash = Math.random() < 0.5;
     const crash = willCrash ? Math.random() * 1.5 + 0.5 : Math.random() * 0.5 + 2.0;
@@ -75,7 +75,7 @@ export default function CrashGame({ user }: CrashGameProps) {
         setResult('lose');
         setMessage(`💥 Крах на ${crash.toFixed(2)}x! Вы потеряли ${bet} 💎`);
         
-        userStorage.addTransaction(user.fullName, {
+        storage.addTransaction(user.fullName, {
           type: 'game',
           amount: -bet,
           description: `Crash (Проигрыш на ${crash.toFixed(2)}x)`,
@@ -95,13 +95,13 @@ export default function CrashGame({ user }: CrashGameProps) {
     const bet = parseInt(betAmount);
     const winAmount = Math.floor(bet * multiplier);
     
-    userStorage.updateBalance(user.fullName, winAmount);
+    storage.updateUserBalance(user.fullName, winAmount);
     
     setIsPlaying(false);
     setResult('win');
     setMessage(`🎉 Успешный выход на ${multiplier.toFixed(2)}x! Вы выиграли ${winAmount} 💎`);
     
-    userStorage.addTransaction(user.fullName, {
+    storage.addTransaction(user.fullName, {
       type: 'game',
       amount: winAmount - bet,
       description: `Crash (Выигрыш ${multiplier.toFixed(2)}x)`,

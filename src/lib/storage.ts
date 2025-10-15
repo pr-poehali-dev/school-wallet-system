@@ -107,4 +107,61 @@ export const storage = {
     balances[userId] = balance;
     localStorage.setItem('userBalances', JSON.stringify(balances));
   },
+
+  getUsers: () => {
+    const users = localStorage.getItem('zov_users');
+    return users ? JSON.parse(users) : [];
+  },
+
+  saveUsers: (users: any[]) => {
+    localStorage.setItem('zov_users', JSON.stringify(users));
+  },
+
+  registerUser: (fullName: string, pinCode: string) => {
+    const users = storage.getUsers();
+    const existing = users.find((u: any) => u.fullName === fullName);
+    if (existing) return existing;
+    
+    const newUser = { fullName, pinCode, balance: 0 };
+    users.push(newUser);
+    storage.saveUsers(users);
+    storage.setUserBalance(fullName, 0);
+    return newUser;
+  },
+
+  getUser: (fullName: string, pinCode: string) => {
+    const users = storage.getUsers();
+    return users.find((u: any) => u.fullName === fullName && u.pinCode === pinCode) || null;
+  },
+
+  updateUser: (oldFullName: string, oldPinCode: string, newFullName: string, newPinCode: string) => {
+    const users = storage.getUsers();
+    const index = users.findIndex((u: any) => u.fullName === oldFullName && u.pinCode === oldPinCode);
+    if (index === -1) return false;
+    
+    const balance = storage.getUserBalance(oldFullName);
+    users[index] = { fullName: newFullName, pinCode: newPinCode, balance };
+    storage.saveUsers(users);
+    
+    if (oldFullName !== newFullName) {
+      storage.setUserBalance(newFullName, balance);
+      const balances = JSON.parse(localStorage.getItem('userBalances') || '{}');
+      delete balances[oldFullName];
+      localStorage.setItem('userBalances', JSON.stringify(balances));
+    }
+    
+    return true;
+  },
+
+  addTransaction: (userId: string, transaction: any) => {
+    const transactions = JSON.parse(localStorage.getItem('zov_transactions') || '{}');
+    if (!transactions[userId]) transactions[userId] = [];
+    transactions[userId].unshift(transaction);
+    localStorage.setItem('zov_transactions', JSON.stringify(transactions));
+  },
+
+  getUserTransactions: (userId: string) => {
+    const transactions = JSON.parse(localStorage.getItem('zov_transactions') || '{}');
+    return transactions[userId] || [];
+  },
 };

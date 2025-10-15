@@ -11,7 +11,6 @@ import Requests from '@/components/Requests';
 import Profile from '@/components/Profile';
 import Leaderboard from '@/components/Leaderboard';
 import { storage } from '@/lib/storage';
-import { userStorage } from '@/lib/userStorage';
 
 export default function Index() {
   const navigate = useNavigate();
@@ -34,13 +33,13 @@ export default function Index() {
       return;
     }
 
-    const existingUser = userStorage.getUser(fullName, pinCode);
+    const existingUser = storage.getUser(fullName, pinCode);
     if (!existingUser) {
       alert('Неверное ФИО или PIN-код');
       return;
     }
 
-    const balance = userStorage.getUserBalance(fullName);
+    const balance = storage.getUserBalance(fullName);
     setUser({ fullName, pinCode, balance });
     setIsAuthenticated(true);
   };
@@ -56,20 +55,20 @@ export default function Index() {
       return;
     }
 
-    userStorage.registerUser(fullName, pinCode);
-    const balance = userStorage.getUserBalance(fullName);
+    storage.registerUser(fullName, pinCode);
+    const balance = storage.getUserBalance(fullName);
     setUser({ fullName, pinCode, balance });
     setIsAuthenticated(true);
   };
 
   const handleProfileUpdate = (newFullName: string, newPinCode: string) => {
-    setUser({ fullName: newFullName, pinCode: newPinCode, balance: userStorage.getUserBalance(newFullName) });
+    setUser({ fullName: newFullName, pinCode: newPinCode, balance: storage.getUserBalance(newFullName) });
   };
 
   useEffect(() => {
     if (user) {
       const interval = setInterval(() => {
-        const balance = userStorage.getUserBalance(user.fullName);
+        const balance = storage.getUserBalance(user.fullName);
         setUser((prev: any) => ({ ...prev, balance }));
       }, 1000);
       return () => clearInterval(interval);

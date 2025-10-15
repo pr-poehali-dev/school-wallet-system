@@ -8,7 +8,6 @@ import Icon from '@/components/ui/icon';
 import { Badge } from '@/components/ui/badge';
 import { toast } from '@/components/ui/use-toast';
 import { storage } from '@/lib/storage';
-import { userStorage } from '@/lib/userStorage';
 
 interface StaffPanelProps {
   onLogout: () => void;
@@ -34,7 +33,7 @@ export default function StaffPanel({ onLogout }: StaffPanelProps) {
   const [users, setUsers] = useState<any[]>([]);
 
   useEffect(() => {
-    const allUsers = userStorage.getUsers();
+    const allUsers = storage.getUsers();
     setUsers(allUsers);
   }, []);
 
@@ -49,9 +48,9 @@ export default function StaffPanel({ onLogout }: StaffPanelProps) {
     }
 
     const amount = parseInt(depositAmount);
-    userStorage.updateBalance(selectedUser, amount);
+    storage.updateUserBalance(selectedUser, amount);
     
-    userStorage.addTransaction(selectedUser, {
+    storage.addTransaction(selectedUser, {
       type: 'staff_add',
       amount: amount,
       description: 'Начисление от персонала',
@@ -65,7 +64,7 @@ export default function StaffPanel({ onLogout }: StaffPanelProps) {
     setSelectedUser('');
     setDepositAmount('');
     
-    const allUsers = userStorage.getUsers();
+    const allUsers = storage.getUsers();
     setUsers(allUsers);
   };
 

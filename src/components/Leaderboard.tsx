@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import Icon from '@/components/ui/icon';
-import { userStorage } from '@/lib/userStorage';
+import { storage } from '@/lib/storage';
 
 interface LeaderboardProps {
   currentUser?: {
@@ -20,7 +20,7 @@ export default function Leaderboard({ currentUser }: LeaderboardProps) {
   }, [currentUser]);
 
   const loadLeaderboard = () => {
-    const allUsers = userStorage.getUsers();
+    const allUsers = storage.getUsers();
     const sorted = allUsers
       .sort((a, b) => b.balance - a.balance)
       .slice(0, 10);

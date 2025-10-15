@@ -4,7 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import Icon from '@/components/ui/icon';
-import { userStorage } from '@/lib/userStorage';
+import { storage } from '@/lib/storage';
 
 interface ProfileProps {
   user: {
@@ -42,21 +42,21 @@ export default function Profile({ user, onUpdate }: ProfileProps) {
       return;
     }
 
-    const oldUser = userStorage.getUser(user.fullName, user.pinCode);
+    const oldUser = storage.getUser(user.fullName, user.pinCode);
     if (!oldUser) {
       setError('Ошибка: пользователь не найден');
       return;
     }
 
     if (newFullName !== user.fullName) {
-      const existingUser = userStorage.getUser(newFullName, newPinCode);
+      const existingUser = storage.getUser(newFullName, newPinCode);
       if (existingUser) {
         setError('Пользователь с таким ФИО уже существует');
         return;
       }
     }
 
-    userStorage.updateUser(user.fullName, user.pinCode, newFullName, newPinCode);
+    storage.updateUser(user.fullName, user.pinCode, newFullName, newPinCode);
     onUpdate(newFullName, newPinCode);
     setSuccess('Данные успешно обновлены!');
     setIsEditing(false);
