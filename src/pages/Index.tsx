@@ -23,7 +23,7 @@ export default function Index() {
   const [pinCode, setPinCode] = useState('');
   const [isRegistering, setIsRegistering] = useState(false);
 
-  const handleAuth = async () => {
+  const handleLogin = () => {
     if (!fullName || !pinCode) {
       alert('Пожалуйста, заполните все поля');
       return;
@@ -34,16 +34,29 @@ export default function Index() {
       return;
     }
 
-    if (isRegistering) {
-      userStorage.registerUser(fullName, pinCode);
-    } else {
-      const existingUser = userStorage.getUser(fullName, pinCode);
-      if (!existingUser) {
-        alert('Неверное ФИО или PIN-код');
-        return;
-      }
+    const existingUser = userStorage.getUser(fullName, pinCode);
+    if (!existingUser) {
+      alert('Неверное ФИО или PIN-код');
+      return;
     }
 
+    const balance = userStorage.getUserBalance(fullName);
+    setUser({ fullName, pinCode, balance });
+    setIsAuthenticated(true);
+  };
+
+  const handleRegister = () => {
+    if (!fullName || !pinCode) {
+      alert('Пожалуйста, заполните все поля');
+      return;
+    }
+
+    if (pinCode.length !== 4) {
+      alert('PIN-код должен содержать 4 цифры');
+      return;
+    }
+
+    userStorage.registerUser(fullName, pinCode);
     const balance = userStorage.getUserBalance(fullName);
     setUser({ fullName, pinCode, balance });
     setIsAuthenticated(true);
@@ -102,19 +115,13 @@ export default function Index() {
             </div>
             <div className="flex gap-2">
               <Button
-                onClick={() => {
-                  setIsRegistering(false);
-                  handleAuth();
-                }}
+                onClick={handleLogin}
                 className="flex-1 h-12 bg-gradient-to-r from-primary to-secondary hover:opacity-90 transition-opacity"
               >
                 Войти
               </Button>
               <Button
-                onClick={() => {
-                  setIsRegistering(true);
-                  handleAuth();
-                }}
+                onClick={handleRegister}
                 variant="outline"
                 className="flex-1 h-12"
               >
