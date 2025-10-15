@@ -41,8 +41,10 @@ export default function Index() {
     }
 
     const balance = storage.getUserBalance(fullName);
-    setUser({ fullName, pinCode, balance });
+    const userData = { fullName, pinCode, balance };
+    setUser(userData);
     setIsAuthenticated(true);
+    localStorage.setItem('zov_current_user', JSON.stringify(userData));
   };
 
   const handleRegister = () => {
@@ -58,8 +60,10 @@ export default function Index() {
 
     storage.registerUser(fullName, pinCode);
     const balance = storage.getUserBalance(fullName);
-    setUser({ fullName, pinCode, balance });
+    const userData = { fullName, pinCode, balance };
+    setUser(userData);
     setIsAuthenticated(true);
+    localStorage.setItem('zov_current_user', JSON.stringify(userData));
   };
 
   const handleProfileUpdate = (newFullName: string, newPinCode: string) => {
@@ -67,11 +71,21 @@ export default function Index() {
   };
 
   useEffect(() => {
+    const savedAuth = localStorage.getItem('zov_current_user');
+    if (savedAuth) {
+      const userData = JSON.parse(savedAuth);
+      const balance = storage.getUserBalance(userData.fullName);
+      setUser({ ...userData, balance });
+      setIsAuthenticated(true);
+    }
+  }, []);
+
+  useEffect(() => {
     if (user) {
       const interval = setInterval(() => {
         const balance = storage.getUserBalance(user.fullName);
         setUser((prev: any) => ({ ...prev, balance }));
-      }, 1000);
+      }, 100);
       return () => clearInterval(interval);
     }
   }, [user]);
@@ -161,6 +175,7 @@ export default function Index() {
             <Button
               variant="ghost"
               onClick={() => {
+                localStorage.removeItem('zov_current_user');
                 setIsAuthenticated(false);
                 setUser(null);
                 setFullName('');
