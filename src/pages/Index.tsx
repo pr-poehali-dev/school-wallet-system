@@ -8,8 +8,9 @@ import Icon from '@/components/ui/icon';
 import Dashboard from '@/components/Dashboard';
 import Casino from '@/components/Casino';
 import Requests from '@/components/Requests';
-import History from '@/components/History';
+import Profile from '@/components/Profile';
 import { storage } from '@/lib/storage';
+import { userStorage } from '@/lib/userStorage';
 
 export default function Index() {
   const navigate = useNavigate();
@@ -32,15 +33,29 @@ export default function Index() {
       return;
     }
 
-    const balance = storage.getUserBalance(fullName);
-    setUser({ fullName, balance });
+    if (isRegistering) {
+      userStorage.registerUser(fullName, pinCode);
+    } else {
+      const existingUser = userStorage.getUser(fullName, pinCode);
+      if (!existingUser) {
+        alert('Неверное ФИО или PIN-код');
+        return;
+      }
+    }
+
+    const balance = userStorage.getUserBalance(fullName);
+    setUser({ fullName, pinCode, balance });
     setIsAuthenticated(true);
+  };
+
+  const handleProfileUpdate = (newFullName: string, newPinCode: string) => {
+    setUser({ fullName: newFullName, pinCode: newPinCode, balance: userStorage.getUserBalance(newFullName) });
   };
 
   useEffect(() => {
     if (user) {
       const interval = setInterval(() => {
-        const balance = storage.getUserBalance(user.fullName);
+        const balance = userStorage.getUserBalance(user.fullName);
         setUser((prev: any) => ({ ...prev, balance }));
       }, 1000);
       return () => clearInterval(interval);
@@ -152,7 +167,7 @@ export default function Index() {
 
       <div className="container mx-auto px-4 py-8">
         <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-          <TabsList className="grid w-full grid-cols-3 lg:grid-cols-3 bg-white/80 backdrop-blur-lg p-1 h-auto">
+          <TabsList className="grid w-full grid-cols-4 lg:grid-cols-4 bg-white/80 backdrop-blur-lg p-1 h-auto">
             <TabsTrigger value="dashboard" className="flex flex-col gap-1 py-3">
               <Icon name="LayoutDashboard" size={20} />
               <span className="text-xs">Главная</span>
@@ -164,6 +179,10 @@ export default function Index() {
             <TabsTrigger value="requests" className="flex flex-col gap-1 py-3">
               <Icon name="ArrowDownUp" size={20} />
               <span className="text-xs">Заявки</span>
+            </TabsTrigger>
+            <TabsTrigger value="profile" className="flex flex-col gap-1 py-3">
+              <Icon name="User" size={20} />
+              <span className="text-xs">Профиль</span>
             </TabsTrigger>
           </TabsList>
 
@@ -177,6 +196,10 @@ export default function Index() {
 
           <TabsContent value="requests" className="mt-6 animate-fade-in">
             <Requests user={user} />
+          </TabsContent>
+
+          <TabsContent value="profile" className="mt-6 animate-fade-in">
+            <Profile user={user} onUpdate={handleProfileUpdate} />
           </TabsContent>
         </Tabs>
       </div>

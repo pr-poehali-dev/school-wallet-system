@@ -8,6 +8,7 @@ import Icon from '@/components/ui/icon';
 import { Badge } from '@/components/ui/badge';
 import { toast } from '@/components/ui/use-toast';
 import { storage } from '@/lib/storage';
+import { userStorage } from '@/lib/userStorage';
 
 interface StaffPanelProps {
   onLogout: () => void;
@@ -30,11 +31,12 @@ export default function StaffPanel({ onLogout }: StaffPanelProps) {
     setWithdrawalRequests(withdrawals);
   };
 
-  const mockUsers = [
-    { id: 1, name: 'Иванов Иван Иванович', balance: 0 },
-    { id: 2, name: 'Петрова Мария Сергеевна', balance: 0 },
-    { id: 3, name: 'Сидоров Алексей Петрович', balance: 0 },
-  ];
+  const [users, setUsers] = useState<any[]>([]);
+
+  useEffect(() => {
+    const allUsers = userStorage.getUsers();
+    setUsers(allUsers);
+  }, []);
 
   const handleDeposit = () => {
     if (!selectedUser || !depositAmount) {
@@ -46,13 +48,25 @@ export default function StaffPanel({ onLogout }: StaffPanelProps) {
       return;
     }
 
-    const user = mockUsers.find((u) => u.id.toString() === selectedUser);
+    const amount = parseInt(depositAmount);
+    userStorage.updateBalance(selectedUser, amount);
+    
+    userStorage.addTransaction(selectedUser, {
+      type: 'staff_add',
+      amount: amount,
+      description: 'Начисление от персонала',
+      timestamp: new Date().toISOString()
+    });
+
     toast({
       title: 'Баланс пополнен',
-      description: `Пользователю ${user?.name} начислено ₽${depositAmount}`,
+      description: `Пользователю ${selectedUser} начислено ${amount} 💎`,
     });
     setSelectedUser('');
     setDepositAmount('');
+    
+    const allUsers = userStorage.getUsers();
+    setUsers(allUsers);
   };
 
   const handleApproveDeposit = (requestId: number) => {
@@ -273,19 +287,19 @@ export default function StaffPanel({ onLogout }: StaffPanelProps) {
                     className="w-full h-12 px-3 rounded-lg border bg-background"
                   >
                     <option value="">-- Выберите пользователя --</option>
-                    {mockUsers.map((user) => (
-                      <option key={user.id} value={user.id}>
-                        {user.name} (Баланс: ₽{user.balance})
+                    {users.map((user) => (
+                      <option key={user.fullName} value={user.fullName}>
+                        {user.fullName} (Баланс: {user.balance} 💎)
                       </option>
                     ))}
                   </select>
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="depositAmount">Сумма пополнения (₽)</Label>
+                  <Label htmlFor="depositAmount">Сумма пополнения (💎)</Label>
                   <Input
                     id="depositAmount"
                     type="number"
-                    placeholder="500"
+                    placeholder="100"
                     value={depositAmount}
                     onChange={(e) => setDepositAmount(e.target.value)}
                     className="h-12 text-lg"
@@ -305,31 +319,40 @@ export default function StaffPanel({ onLogout }: StaffPanelProps) {
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
                   <Icon name="Users" size={20} />
-                  Все пользователи
+                  Все пользователи ({users.length})
                 </CardTitle>
               </CardHeader>
               <CardContent>
                 <div className="space-y-3">
-                  {mockUsers.map((user) => (
-                    <div
-                      key={user.id}
-                      className="flex items-center justify-between p-4 rounded-lg border bg-card"
-                    >
-                      <div className="flex items-center gap-3">
-                        <div className="p-2 rounded-full bg-primary/10">
-                          <Icon name="User" size={20} className="text-primary" />
-                        </div>
-                        <div>
-                          <p className="font-semibold">{user.name}</p>
-                          <p className="text-sm text-muted-foreground">PIN: ••••</p>
-                        </div>
-                      </div>
-                      <div className="text-right">
-                        <p className="font-bold text-lg">₽{user.balance}</p>
-                        <Badge variant="secondary">Активен</Badge>
-                      </div>
+                  {users.length === 0 ? (
+                    <div className="py-12 text-center">
+                      <Icon name="Users" size={48} className="mx-auto mb-4 text-muted-foreground" />
+                      <p className="text-lg font-semibold text-muted-foreground">
+                        Нет зарегистрированных пользователей
+                      </p>
                     </div>
-                  ))}
+                  ) : (
+                    users.map((user) => (
+                      <div
+                        key={user.fullName}
+                        className="flex items-center justify-between p-4 rounded-lg border bg-card"
+                      >
+                        <div className="flex items-center gap-3">
+                          <div className="p-2 rounded-full bg-primary/10">
+                            <Icon name="User" size={20} className="text-primary" />
+                          </div>
+                          <div>
+                            <p className="font-semibold">{user.fullName}</p>
+                            <p className="text-sm text-muted-foreground">PIN: ••••</p>
+                          </div>
+                        </div>
+                        <div className="text-right">
+                          <p className="font-bold text-lg">{user.balance} 💎</p>
+                          <Badge variant="secondary">Активен</Badge>
+                        </div>
+                      </div>
+                    ))
+                  )}
                 </div>
               </CardContent>
             </Card>
