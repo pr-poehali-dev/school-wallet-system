@@ -6,7 +6,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import Icon from '@/components/ui/icon';
 
-const STAFF_PASSWORD = 'admin2024';
+const STAFF_PASSWORD = 'admin123';
 
 export default function StaffLogin() {
   const [password, setPassword] = useState('');
