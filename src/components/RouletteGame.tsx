@@ -41,7 +41,7 @@ export default function RouletteGame({ user }: RouletteGameProps) {
     setResult(null);
     setMessage('');
 
-    setTimeout(() => {
+    setTimeout(async () => {
       const isWin = Math.random() > 0.55;
       setResult(isWin ? 'win' : 'loss');
       setIsSpinning(false);
