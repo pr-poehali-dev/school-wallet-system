@@ -120,12 +120,23 @@ export const storage = {
   registerUser: (fullName: string, pinCode: string) => {
     const users = storage.getUsers();
     const existing = users.find((u: any) => u.fullName === fullName);
-    if (existing) return existing;
+    if (existing) {
+      throw new Error('ФИО уже занято');
+    }
     
-    const newUser = { fullName, pinCode, balance: 0 };
+    const newUser = { fullName, pinCode, balance: 0, createdAt: new Date().toISOString() };
     users.push(newUser);
     storage.saveUsers(users);
     storage.setUserBalance(fullName, 0);
+    
+    const stats = JSON.parse(localStorage.getItem('zov_user_stats') || '{}');
+    stats[fullName] = {
+      lastVisit: new Date().toISOString(),
+      casinoWins: 0,
+      totalTransactions: 0
+    };
+    localStorage.setItem('zov_user_stats', JSON.stringify(stats));
+    
     return newUser;
   },
 
@@ -158,10 +169,40 @@ export const storage = {
     if (!transactions[userId]) transactions[userId] = [];
     transactions[userId].unshift(transaction);
     localStorage.setItem('zov_transactions', JSON.stringify(transactions));
+    
+    const stats = JSON.parse(localStorage.getItem('zov_user_stats') || '{}');
+    if (!stats[userId]) {
+      stats[userId] = { lastVisit: new Date().toISOString(), casinoWins: 0, totalTransactions: 0 };
+    }
+    stats[userId].totalTransactions = (stats[userId].totalTransactions || 0) + 1;
+    localStorage.setItem('zov_user_stats', JSON.stringify(stats));
   },
 
   getUserTransactions: (userId: string) => {
     const transactions = JSON.parse(localStorage.getItem('zov_transactions') || '{}');
     return transactions[userId] || [];
+  },
+
+  getUserStats: (userId: string) => {
+    const stats = JSON.parse(localStorage.getItem('zov_user_stats') || '{}');
+    return stats[userId] || { lastVisit: null, casinoWins: 0, totalTransactions: 0 };
+  },
+
+  updateUserStats: (userId: string, updates: any) => {
+    const stats = JSON.parse(localStorage.getItem('zov_user_stats') || '{}');
+    if (!stats[userId]) {
+      stats[userId] = { lastVisit: new Date().toISOString(), casinoWins: 0, totalTransactions: 0 };
+    }
+    stats[userId] = { ...stats[userId], ...updates };
+    localStorage.setItem('zov_user_stats', JSON.stringify(stats));
+  },
+
+  updateLastVisit: (userId: string) => {
+    const stats = JSON.parse(localStorage.getItem('zov_user_stats') || '{}');
+    if (!stats[userId]) {
+      stats[userId] = { lastVisit: new Date().toISOString(), casinoWins: 0, totalTransactions: 0 };
+    }
+    stats[userId].lastVisit = new Date().toISOString();
+    localStorage.setItem('zov_user_stats', JSON.stringify(stats));
   },
 };

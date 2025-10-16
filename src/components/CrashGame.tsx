@@ -107,6 +107,11 @@ export default function CrashGame({ user }: CrashGameProps) {
       description: `Crash (Выигрыш ${multiplier.toFixed(2)}x)`,
       timestamp: new Date().toISOString()
     });
+    
+    const stats = storage.getUserStats(user.fullName);
+    storage.updateUserStats(user.fullName, {
+      casinoWins: (stats.casinoWins || 0) + (winAmount - bet)
+    });
   };
 
   const resetGame = () => {

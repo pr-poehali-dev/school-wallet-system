@@ -21,14 +21,19 @@ export default function Leaderboard({ currentUser }: LeaderboardProps) {
 
   const loadLeaderboard = () => {
     const allUsers = storage.getUsers();
-    const sorted = allUsers
+    const usersWithBalances = allUsers.map((u: any) => ({
+      ...u,
+      balance: storage.getUserBalance(u.fullName)
+    }));
+    
+    const sorted = usersWithBalances
       .sort((a, b) => b.balance - a.balance)
       .slice(0, 10);
     
     setTopUsers(sorted);
 
     if (currentUser) {
-      const allSorted = allUsers.sort((a, b) => b.balance - a.balance);
+      const allSorted = usersWithBalances.sort((a, b) => b.balance - a.balance);
       const rank = allSorted.findIndex(u => u.fullName === currentUser.fullName);
       setCurrentUserRank(rank >= 0 ? rank + 1 : null);
     }

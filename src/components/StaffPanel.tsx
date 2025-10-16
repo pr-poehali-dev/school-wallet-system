@@ -21,11 +21,13 @@ export default function StaffPanel({ onLogout }: StaffPanelProps) {
 
   useEffect(() => {
     loadRequests();
+    const interval = setInterval(loadRequests, 2000);
+    return () => clearInterval(interval);
   }, []);
 
   const loadRequests = () => {
-    const deposits = storage.getDepositRequests().filter(req => req.status === 'pending');
-    const withdrawals = storage.getWithdrawalRequests().filter(req => req.status === 'pending');
+    const deposits = storage.getDepositRequests();
+    const withdrawals = storage.getWithdrawalRequests();
     setDepositRequests(deposits);
     setWithdrawalRequests(withdrawals);
   };
@@ -33,9 +35,19 @@ export default function StaffPanel({ onLogout }: StaffPanelProps) {
   const [users, setUsers] = useState<any[]>([]);
 
   useEffect(() => {
-    const allUsers = storage.getUsers();
-    setUsers(allUsers);
+    loadUsers();
+    const interval = setInterval(loadUsers, 2000);
+    return () => clearInterval(interval);
   }, []);
+
+  const loadUsers = () => {
+    const allUsers = storage.getUsers();
+    const usersWithBalances = allUsers.map((u: any) => ({
+      ...u,
+      balance: storage.getUserBalance(u.fullName)
+    }));
+    setUsers(usersWithBalances);
+  };
 
   const handleDeposit = () => {
     if (!selectedUser || !depositAmount) {
@@ -63,9 +75,7 @@ export default function StaffPanel({ onLogout }: StaffPanelProps) {
     });
     setSelectedUser('');
     setDepositAmount('');
-    
-    const allUsers = storage.getUsers();
-    setUsers(allUsers);
+    loadUsers();
   };
 
   const handleApproveDeposit = (requestId: number) => {
@@ -170,32 +180,47 @@ export default function StaffPanel({ onLogout }: StaffPanelProps) {
                     depositRequests.map((request) => (
                       <div
                         key={request.id}
-                        className="p-4 rounded-lg border bg-card space-y-3"
+                        className={`p-4 rounded-lg border space-y-3 ${
+                          request.status === 'pending' 
+                            ? 'bg-card' 
+                            : request.status === 'approved' 
+                            ? 'bg-green-500/10 border-green-500/30' 
+                            : 'bg-red-500/10 border-red-500/30'
+                        }`}
                       >
                         <div className="flex items-center justify-between">
                           <div>
                             <p className="font-semibold">{request.userName}</p>
                             <p className="text-sm text-muted-foreground">{request.date}</p>
                           </div>
-                          <p className="font-bold text-xl text-accent">₽{request.amount}</p>
+                          <div className="text-right">
+                            <p className="font-bold text-xl text-accent">₽{request.amount}</p>
+                            {request.status !== 'pending' && (
+                              <Badge variant={request.status === 'approved' ? 'default' : 'destructive'}>
+                                {request.status === 'approved' ? 'Одобрено' : 'Отклонено'}
+                              </Badge>
+                            )}
+                          </div>
                         </div>
-                        <div className="flex gap-2">
-                          <Button
-                            onClick={() => handleApproveDeposit(request.id)}
-                            className="flex-1 bg-accent hover:bg-accent/90"
-                          >
-                            <Icon name="Check" size={18} className="mr-2" />
-                            Одобрить
-                          </Button>
-                          <Button
-                            onClick={() => handleRejectDeposit(request.id)}
-                            variant="destructive"
-                            className="flex-1"
-                          >
-                            <Icon name="X" size={18} className="mr-2" />
-                            Отклонить
-                          </Button>
-                        </div>
+                        {request.status === 'pending' && (
+                          <div className="flex gap-2">
+                            <Button
+                              onClick={() => handleApproveDeposit(request.id)}
+                              className="flex-1 bg-accent hover:bg-accent/90"
+                            >
+                              <Icon name="Check" size={18} className="mr-2" />
+                              Одобрить
+                            </Button>
+                            <Button
+                              onClick={() => handleRejectDeposit(request.id)}
+                              variant="destructive"
+                              className="flex-1"
+                            >
+                              <Icon name="X" size={18} className="mr-2" />
+                              Отклонить
+                            </Button>
+                          </div>
+                        )}
                       </div>
                     ))
                   )}
@@ -228,38 +253,55 @@ export default function StaffPanel({ onLogout }: StaffPanelProps) {
                     withdrawalRequests.map((request) => (
                       <div
                         key={request.id}
-                        className="p-4 rounded-lg border bg-card space-y-3"
+                        className={`p-4 rounded-lg border space-y-3 ${
+                          request.status === 'pending' 
+                            ? 'bg-card' 
+                            : request.status === 'approved' 
+                            ? 'bg-green-500/10 border-green-500/30' 
+                            : 'bg-red-500/10 border-red-500/30'
+                        }`}
                       >
                         <div className="flex items-center justify-between">
                           <div>
                             <p className="font-semibold">{request.userName}</p>
                             <p className="text-sm text-muted-foreground">{request.date}</p>
                           </div>
-                          <p className="font-bold text-xl text-primary">₽{request.amount}</p>
+                          <div className="text-right">
+                            <p className="font-bold text-xl text-primary">₽{request.amount}</p>
+                            {request.status !== 'pending' && (
+                              <Badge variant={request.status === 'approved' ? 'default' : 'destructive'}>
+                                {request.status === 'approved' ? 'Одобрено' : 'Отклонено'}
+                              </Badge>
+                            )}
+                          </div>
                         </div>
-                        <div className="flex items-start gap-2 p-3 rounded-lg bg-muted/50">
-                          <Icon name="AlertCircle" size={16} className="text-primary mt-0.5" />
-                          <p className="text-sm text-muted-foreground">
-                            После одобрения выдайте наличные пользователю в школе
-                          </p>
-                        </div>
-                        <div className="flex gap-2">
-                          <Button
-                            onClick={() => handleApproveWithdrawal(request.id)}
-                            className="flex-1 bg-gradient-to-r from-primary to-secondary"
-                          >
-                            <Icon name="Check" size={18} className="mr-2" />
-                            Одобрить
-                          </Button>
-                          <Button
-                            onClick={() => handleRejectWithdrawal(request.id)}
-                            variant="destructive"
-                            className="flex-1"
-                          >
-                            <Icon name="X" size={18} className="mr-2" />
-                            Отклонить
-                          </Button>
-                        </div>
+                        {request.status === 'pending' && (
+                          <>
+                            <div className="flex items-start gap-2 p-3 rounded-lg bg-muted/50">
+                              <Icon name="AlertCircle" size={16} className="text-primary mt-0.5" />
+                              <p className="text-sm text-muted-foreground">
+                                После одобрения выдайте наличные пользователю в школе
+                              </p>
+                            </div>
+                            <div className="flex gap-2">
+                              <Button
+                                onClick={() => handleApproveWithdrawal(request.id)}
+                                className="flex-1 bg-gradient-to-r from-primary to-secondary"
+                              >
+                                <Icon name="Check" size={18} className="mr-2" />
+                                Одобрить
+                              </Button>
+                              <Button
+                                onClick={() => handleRejectWithdrawal(request.id)}
+                                variant="destructive"
+                                className="flex-1"
+                              >
+                                <Icon name="X" size={18} className="mr-2" />
+                                Отклонить
+                              </Button>
+                            </div>
+                          </>
+                        )}
                       </div>
                     ))
                   )}

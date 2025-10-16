@@ -54,6 +54,11 @@ export default function RouletteGame({ user }: RouletteGameProps) {
           description: 'Рулетка (Выигрыш)',
           timestamp: new Date().toISOString()
         });
+        
+        const stats = storage.getUserStats(user.fullName);
+        storage.updateUserStats(user.fullName, {
+          casinoWins: (stats.casinoWins || 0) + amount
+        });
       } else {
         setMessage(`😔 Проигрыш! Вы потеряли ${amount} 💎`);
         

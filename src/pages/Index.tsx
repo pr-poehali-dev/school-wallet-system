@@ -40,6 +40,7 @@ export default function Index() {
       return;
     }
 
+    storage.updateLastVisit(fullName);
     const balance = storage.getUserBalance(fullName);
     const userData = { fullName, pinCode, balance };
     setUser(userData);
@@ -58,12 +59,16 @@ export default function Index() {
       return;
     }
 
-    storage.registerUser(fullName, pinCode);
-    const balance = storage.getUserBalance(fullName);
-    const userData = { fullName, pinCode, balance };
-    setUser(userData);
-    setIsAuthenticated(true);
-    localStorage.setItem('zov_current_user', JSON.stringify(userData));
+    try {
+      storage.registerUser(fullName, pinCode);
+      const balance = storage.getUserBalance(fullName);
+      const userData = { fullName, pinCode, balance };
+      setUser(userData);
+      setIsAuthenticated(true);
+      localStorage.setItem('zov_current_user', JSON.stringify(userData));
+    } catch (error: any) {
+      alert(error.message);
+    }
   };
 
   const handleProfileUpdate = (newFullName: string, newPinCode: string) => {

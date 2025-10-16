@@ -1,6 +1,8 @@
+import { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import Icon from '@/components/ui/icon';
+import { storage } from '@/lib/storage';
 
 interface DashboardProps {
   user: any;
@@ -9,6 +11,14 @@ interface DashboardProps {
 
 export default function Dashboard({ user, onNavigate }: DashboardProps) {
   const balance = user?.balance || 0;
+  const [stats, setStats] = useState<any>({ lastVisit: null, casinoWins: 0, totalTransactions: 0 });
+
+  useEffect(() => {
+    if (user) {
+      const userStats = storage.getUserStats(user.fullName);
+      setStats(userStats);
+    }
+  }, [user]);
 
   return (
     <div className="space-y-6">
@@ -44,13 +54,15 @@ export default function Dashboard({ user, onNavigate }: DashboardProps) {
         <Card className="hover:shadow-lg transition-shadow">
           <CardHeader>
             <CardTitle className="flex items-center gap-2 text-lg">
-              <Icon name="ArrowUpRight" size={20} className="text-accent" />
-              Последнее пополнение
+              <Icon name="Clock" size={20} className="text-accent" />
+              Последнее посещение
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-muted-foreground">₽0</div>
-            <p className="text-sm text-muted-foreground">Нет данных</p>
+            <div className="text-lg font-bold">
+              {stats.lastVisit ? new Date(stats.lastVisit).toLocaleString('ru-RU') : 'Никогда'}
+            </div>
+            <p className="text-sm text-muted-foreground">Время входа</p>
           </CardContent>
         </Card>
 
@@ -62,7 +74,7 @@ export default function Dashboard({ user, onNavigate }: DashboardProps) {
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-muted-foreground">₽0</div>
+            <div className="text-2xl font-bold">₽{stats.casinoWins || 0}</div>
             <p className="text-sm text-muted-foreground">За всё время</p>
           </CardContent>
         </Card>
@@ -75,8 +87,8 @@ export default function Dashboard({ user, onNavigate }: DashboardProps) {
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-muted-foreground">0</div>
-            <p className="text-sm text-muted-foreground">В этом месяце</p>
+            <div className="text-2xl font-bold">{stats.totalTransactions || 0}</div>
+            <p className="text-sm text-muted-foreground">Всего</p>
           </CardContent>
         </Card>
       </div>
