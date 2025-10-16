@@ -22,7 +22,19 @@ export default function StaffPanel({ onLogout }: StaffPanelProps) {
   useEffect(() => {
     loadRequests();
     const interval = setInterval(loadRequests, 2000);
-    return () => clearInterval(interval);
+    
+    const handleStorageChange = (e: StorageEvent) => {
+      if (e.key === 'depositRequests' || e.key === 'withdrawalRequests') {
+        loadRequests();
+      }
+    };
+    
+    window.addEventListener('storage', handleStorageChange);
+    
+    return () => {
+      clearInterval(interval);
+      window.removeEventListener('storage', handleStorageChange);
+    };
   }, []);
 
   const loadRequests = () => {
@@ -37,7 +49,19 @@ export default function StaffPanel({ onLogout }: StaffPanelProps) {
   useEffect(() => {
     loadUsers();
     const interval = setInterval(loadUsers, 2000);
-    return () => clearInterval(interval);
+    
+    const handleStorageChange = (e: StorageEvent) => {
+      if (e.key === 'users' || e.key?.includes('balance_')) {
+        loadUsers();
+      }
+    };
+    
+    window.addEventListener('storage', handleStorageChange);
+    
+    return () => {
+      clearInterval(interval);
+      window.removeEventListener('storage', handleStorageChange);
+    };
   }, []);
 
   const loadUsers = () => {
