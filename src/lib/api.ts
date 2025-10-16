@@ -2,29 +2,43 @@ const API_URL = 'https://functions.poehali.dev/e6ffe770-e69c-4e1b-b374-786d1a48d
 
 export const api = {
   async register(fullName: string, pinCode: string) {
-    const response = await fetch(API_URL, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ action: 'register', fullName, pinCode })
-    });
-    if (!response.ok) {
-      const error = await response.json();
-      throw new Error(error.error || 'Ошибка регистрации');
+    try {
+      console.log('Registering:', fullName, pinCode.length, 'chars');
+      const response = await fetch(API_URL, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'register', fullName, pinCode })
+      });
+      console.log('Response status:', response.status);
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.error || 'Ошибка регистрации');
+      }
+      const data = await response.json();
+      console.log('Registration success:', data);
+      return data;
+    } catch (error: any) {
+      console.error('Registration error:', error);
+      throw new Error(error.message || 'Не удалось подключиться к серверу');
     }
-    return response.json();
   },
 
   async login(fullName: string, pinCode: string) {
-    const response = await fetch(API_URL, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ action: 'login', fullName, pinCode })
-    });
-    if (!response.ok) {
-      const error = await response.json();
-      throw new Error(error.error || 'Ошибка входа');
+    try {
+      const response = await fetch(API_URL, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'login', fullName, pinCode })
+      });
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.error || 'Ошибка входа');
+      }
+      return response.json();
+    } catch (error: any) {
+      console.error('Login error:', error);
+      throw new Error(error.message || 'Не удалось подключиться к серверу');
     }
-    return response.json();
   },
 
   async getUsers() {
