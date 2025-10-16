@@ -6,13 +6,13 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import Icon from '@/components/ui/icon';
-import { storage } from '@/lib/storage';
+import { api } from '@/lib/api';
 import { toast } from '@/components/ui/use-toast';
 
 export default function Staff() {
   const navigate = useNavigate();
-  const [depositRequests, setDepositRequests] = useState(storage.getDepositRequests());
-  const [withdrawalRequests, setWithdrawalRequests] = useState(storage.getWithdrawalRequests());
+  const [depositRequests, setDepositRequests] = useState<any[]>([]);
+  const [withdrawalRequests, setWithdrawalRequests] = useState<any[]>([]);
   const [selectedUser, setSelectedUser] = useState('');
   const [depositAmount, setDepositAmount] = useState('');
 
@@ -20,12 +20,18 @@ export default function Staff() {
     const isAuth = localStorage.getItem('staffAuth');
     if (!isAuth) {
       navigate('/staff-login');
+      return;
     }
 
-    const interval = setInterval(() => {
-      setDepositRequests(storage.getDepositRequests());
-      setWithdrawalRequests(storage.getWithdrawalRequests());
-    }, 1000);
+    const loadRequests = async () => {
+      const deposits = await api.getDepositRequests();
+      const withdrawals = await api.getWithdrawalRequests();
+      setDepositRequests(deposits);
+      setWithdrawalRequests(withdrawals);
+    };
+
+    loadRequests();
+    const interval = setInterval(loadRequests, 2000);
 
     return () => clearInterval(interval);
   }, [navigate]);
@@ -55,49 +61,83 @@ export default function Staff() {
       return;
     }
 
-    storage.updateUserBalance(selectedUser, amount);
     toast({
-      title: 'Успешно',
-      description: `Начислено ₽${amount} пользователю ${selectedUser}`,
-    });
-    setSelectedUser('');
-    setDepositAmount('');
-  };
-
-  const handleApproveDeposit = (id: number) => {
-    storage.updateDepositRequestStatus(id, 'approved');
-    setDepositRequests(storage.getDepositRequests());
-    toast({
-      title: 'Заявка одобрена',
-      description: 'Средства зачислены на баланс клиента',
-    });
-  };
-
-  const handleRejectDeposit = (id: number) => {
-    storage.updateDepositRequestStatus(id, 'rejected');
-    setDepositRequests(storage.getDepositRequests());
-    toast({
-      title: 'Заявка отклонена',
+      title: 'Функция недоступна',
+      description: 'Используйте обработку заявок',
       variant: 'destructive',
     });
   };
 
-  const handleApproveWithdrawal = (id: number) => {
-    storage.updateWithdrawalRequestStatus(id, 'approved');
-    setWithdrawalRequests(storage.getWithdrawalRequests());
-    toast({
-      title: 'Выдача одобрена',
-      description: 'Средства списаны с баланса. Выдайте наличные в школе',
-    });
+  const handleApproveDeposit = async (id: number) => {
+    try {
+      await api.approveDepositRequest(id);
+      const deposits = await api.getDepositRequests();
+      setDepositRequests(deposits);
+      toast({
+        title: 'Заявка одобрена',
+        description: 'Средства зачислены на баланс клиента',
+      });
+    } catch (error) {
+      toast({
+        title: 'Ошибка',
+        description: 'Не удалось одобрить заявку',
+        variant: 'destructive',
+      });
+    }
   };
 
-  const handleRejectWithdrawal = (id: number) => {
-    storage.updateWithdrawalRequestStatus(id, 'rejected');
-    setWithdrawalRequests(storage.getWithdrawalRequests());
-    toast({
-      title: 'Выдача отклонена',
-      variant: 'destructive',
-    });
+  const handleRejectDeposit = async (id: number) => {
+    try {
+      await api.rejectDepositRequest(id);
+      const deposits = await api.getDepositRequests();
+      setDepositRequests(deposits);
+      toast({
+        title: 'Заявка отклонена',
+        variant: 'destructive',
+      });
+    } catch (error) {
+      toast({
+        title: 'Ошибка',
+        description: 'Не удалось отклонить заявку',
+        variant: 'destructive',
+      });
+    }
+  };
+
+  const handleApproveWithdrawal = async (id: number) => {
+    try {
+      await api.approveWithdrawalRequest(id);
+      const withdrawals = await api.getWithdrawalRequests();
+      setWithdrawalRequests(withdrawals);
+      toast({
+        title: 'Выдача одобрена',
+        description: 'Средства списаны с баланса. Выдайте наличные в школе',
+      });
+    } catch (error) {
+      toast({
+        title: 'Ошибка',
+        description: 'Не удалось одобрить выдачу',
+        variant: 'destructive',
+      });
+    }
+  };
+
+  const handleRejectWithdrawal = async (id: number) => {
+    try {
+      await api.rejectWithdrawalRequest(id);
+      const withdrawals = await api.getWithdrawalRequests();
+      setWithdrawalRequests(withdrawals);
+      toast({
+        title: 'Выдача отклонена',
+        variant: 'destructive',
+      });
+    } catch (error) {
+      toast({
+        title: 'Ошибка',
+        description: 'Не удалось отклонить выдачу',
+        variant: 'destructive',
+      });
+    }
   };
 
   const pendingDeposits = depositRequests.filter(r => r.status === 'pending');

@@ -75,7 +75,7 @@ export const api = {
     return response.json();
   },
 
-  async approveDeposit(requestId: number) {
+  async approveDepositRequest(requestId: number) {
     const response = await fetch(API_URL, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -84,7 +84,7 @@ export const api = {
     return response.json();
   },
 
-  async rejectDeposit(requestId: number) {
+  async rejectDepositRequest(requestId: number) {
     const response = await fetch(API_URL, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -93,7 +93,7 @@ export const api = {
     return response.json();
   },
 
-  async approveWithdrawal(requestId: number) {
+  async approveWithdrawalRequest(requestId: number) {
     const response = await fetch(API_URL, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -102,11 +102,11 @@ export const api = {
     return response.json();
   },
 
-  async rejectWithdrawal(requestId: number) {
+  async rejectWithdrawalRequest(requestId: number) {
     const response = await fetch(API_URL, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.dumps({ action: 'reject_withdrawal', requestId })
+      body: JSON.stringify({ action: 'reject_withdrawal', requestId })
     });
     return response.json();
   },
