@@ -49,8 +49,21 @@ export default function CrashGame({ user }: CrashGameProps) {
 
     await api.updateBalance(user.id, -bet);
     
-    const willCrash = Math.random() < 0.5;
-    const crash = willCrash ? Math.random() * 1.5 + 0.5 : Math.random() * 0.5 + 2.0;
+    const random = Math.random();
+    let crash;
+    
+    if (random < 0.15) {
+      crash = 1.00 + Math.random() * 0.5;
+    } else if (random < 0.40) {
+      crash = 1.50 + Math.random() * 1.5;
+    } else if (random < 0.70) {
+      crash = 3.00 + Math.random() * 5.0;
+    } else if (random < 0.90) {
+      crash = 8.00 + Math.random() * 12.0;
+    } else {
+      crash = 20.00 + Math.random() * 80.0;
+    }
+    
     setCrashPoint(crash);
     
     setIsPlaying(true);
