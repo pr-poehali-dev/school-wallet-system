@@ -72,13 +72,30 @@ export default function Index() {
   };
 
   useEffect(() => {
+    const migrationFlag = localStorage.getItem('zov_db_migrated');
+    if (!migrationFlag) {
+      const legacyKeys = ['zov_users', 'zov_deposit_requests', 'zov_withdrawal_requests', 'zov_user_stats', 'zov_current_user'];
+      legacyKeys.forEach(key => localStorage.removeItem(key));
+      localStorage.setItem('zov_db_migrated', 'true');
+    }
+    
     const savedAuth = localStorage.getItem('zov_current_user');
     if (savedAuth) {
-      const userData = JSON.parse(savedAuth);
-      api.getUserBalance(userData.id).then(balance => {
-        setUser({ ...userData, balance });
-        setIsAuthenticated(true);
-      });
+      try {
+        const userData = JSON.parse(savedAuth);
+        if (userData.id && typeof userData.id === 'number') {
+          api.getUserBalance(userData.id).then(balance => {
+            setUser({ ...userData, balance });
+            setIsAuthenticated(true);
+          }).catch(() => {
+            localStorage.removeItem('zov_current_user');
+          });
+        } else {
+          localStorage.removeItem('zov_current_user');
+        }
+      } catch (e) {
+        localStorage.removeItem('zov_current_user');
+      }
     }
   }, []);
 
@@ -104,6 +121,13 @@ export default function Index() {
               ZOV BANK
             </h1>
             <p className="text-muted-foreground">Зовская платёжная система</p>
+          </div>
+
+          <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-6">
+            <p className="text-sm text-blue-800 text-center">
+              <strong>🔄 Обновление системы!</strong><br/>
+              Все данные переехали в общую базу. Пожалуйста, зарегистрируйтесь заново!
+            </p>
           </div>
 
           <div className="space-y-4">
