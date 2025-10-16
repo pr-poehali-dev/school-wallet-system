@@ -41,7 +41,7 @@ export default function Index() {
       setIsAuthenticated(true);
       localStorage.setItem('zov_current_user', JSON.stringify(userData));
     } catch (error: any) {
-      alert(error.message);
+      alert(error.message || 'Не удалось войти. Проверьте ФИО и PIN-код или зарегистрируйтесь заново');
     }
   };
 
@@ -62,7 +62,7 @@ export default function Index() {
       setIsAuthenticated(true);
       localStorage.setItem('zov_current_user', JSON.stringify(userData));
     } catch (error: any) {
-      alert(error.message);
+      alert(error.message || 'Не удалось зарегистрироваться. Возможно, такой пользователь уже существует');
     }
   };
 
