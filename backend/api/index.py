@@ -13,9 +13,13 @@ def get_db_connection():
     dsn = os.environ.get('DATABASE_URL')
     return psycopg2.connect(dsn)
 
+def escape_string(s):
+    if s is None:
+        return 'NULL'
+    return "'" + str(s).replace("'", "''") + "'"
+
 def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
     method: str = event.get('httpMethod', 'GET')
-    path: str = event.get('queryStringParameters', {}).get('action', '')
     
     if method == 'OPTIONS':
         return {
@@ -43,8 +47,7 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                 pin_code = body_data.get('pinCode')
                 
                 cur.execute(
-                    "SELECT id FROM t_p35973246_school_wallet_system.users WHERE full_name = %s",
-                    (full_name,)
+                    f"SELECT id FROM t_p35973246_school_wallet_system.users WHERE full_name = {escape_string(full_name)}"
                 )
                 if cur.fetchone():
                     return {
@@ -55,10 +58,10 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                     }
                 
                 cur.execute(
-                    """INSERT INTO t_p35973246_school_wallet_system.users 
+                    f"""INSERT INTO t_p35973246_school_wallet_system.users 
                        (full_name, pin_code, balance, created_at, updated_at) 
-                       VALUES (%s, %s, 0, NOW(), NOW()) RETURNING id, full_name, balance""",
-                    (full_name, pin_code)
+                       VALUES ({escape_string(full_name)}, {escape_string(pin_code)}, 0, NOW(), NOW()) 
+                       RETURNING id, full_name, balance"""
                 )
                 user = cur.fetchone()
                 conn.commit()
@@ -75,8 +78,7 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                 pin_code = body_data.get('pinCode')
                 
                 cur.execute(
-                    "SELECT id, full_name, balance FROM t_p35973246_school_wallet_system.users WHERE full_name = %s AND pin_code = %s",
-                    (full_name, pin_code)
+                    f"SELECT id, full_name, balance FROM t_p35973246_school_wallet_system.users WHERE full_name = {escape_string(full_name)} AND pin_code = {escape_string(pin_code)}"
                 )
                 user = cur.fetchone()
                 
@@ -100,10 +102,9 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                 amount = body_data.get('amount')
                 
                 cur.execute(
-                    """INSERT INTO t_p35973246_school_wallet_system.deposit_requests 
+                    f"""INSERT INTO t_p35973246_school_wallet_system.deposit_requests 
                        (user_id, amount, status, created_at) 
-                       VALUES (%s, %s, 'pending', NOW()) RETURNING id""",
-                    (user_id, amount)
+                       VALUES ({user_id}, {amount}, 'pending', NOW()) RETURNING id"""
                 )
                 request_id = cur.fetchone()[0]
                 conn.commit()
@@ -120,10 +121,9 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                 amount = body_data.get('amount')
                 
                 cur.execute(
-                    """INSERT INTO t_p35973246_school_wallet_system.withdrawal_requests 
+                    f"""INSERT INTO t_p35973246_school_wallet_system.withdrawal_requests 
                        (user_id, amount, status, created_at) 
-                       VALUES (%s, %s, 'pending', NOW()) RETURNING id""",
-                    (user_id, amount)
+                       VALUES ({user_id}, {amount}, 'pending', NOW()) RETURNING id"""
                 )
                 request_id = cur.fetchone()[0]
                 conn.commit()
@@ -139,20 +139,17 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                 request_id = body_data.get('requestId')
                 
                 cur.execute(
-                    "SELECT user_id, amount FROM t_p35973246_school_wallet_system.deposit_requests WHERE id = %s",
-                    (request_id,)
+                    f"SELECT user_id, amount FROM t_p35973246_school_wallet_system.deposit_requests WHERE id = {request_id}"
                 )
                 request = cur.fetchone()
                 
                 if request:
                     user_id, amount = request
                     cur.execute(
-                        "UPDATE t_p35973246_school_wallet_system.users SET balance = balance + %s WHERE id = %s",
-                        (amount, user_id)
+                        f"UPDATE t_p35973246_school_wallet_system.users SET balance = balance + {amount} WHERE id = {user_id}"
                     )
                     cur.execute(
-                        "UPDATE t_p35973246_school_wallet_system.deposit_requests SET status = 'approved', processed_at = NOW() WHERE id = %s",
-                        (request_id,)
+                        f"UPDATE t_p35973246_school_wallet_system.deposit_requests SET status = 'approved', processed_at = NOW() WHERE id = {request_id}"
                     )
                     conn.commit()
                 
@@ -166,8 +163,7 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
             elif action == 'reject_deposit':
                 request_id = body_data.get('requestId')
                 cur.execute(
-                    "UPDATE t_p35973246_school_wallet_system.deposit_requests SET status = 'rejected', processed_at = NOW() WHERE id = %s",
-                    (request_id,)
+                    f"UPDATE t_p35973246_school_wallet_system.deposit_requests SET status = 'rejected', processed_at = NOW() WHERE id = {request_id}"
                 )
                 conn.commit()
                 
@@ -182,20 +178,17 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                 request_id = body_data.get('requestId')
                 
                 cur.execute(
-                    "SELECT user_id, amount FROM t_p35973246_school_wallet_system.withdrawal_requests WHERE id = %s",
-                    (request_id,)
+                    f"SELECT user_id, amount FROM t_p35973246_school_wallet_system.withdrawal_requests WHERE id = {request_id}"
                 )
                 request = cur.fetchone()
                 
                 if request:
                     user_id, amount = request
                     cur.execute(
-                        "UPDATE t_p35973246_school_wallet_system.users SET balance = balance - %s WHERE id = %s",
-                        (amount, user_id)
+                        f"UPDATE t_p35973246_school_wallet_system.users SET balance = balance - {amount} WHERE id = {user_id}"
                     )
                     cur.execute(
-                        "UPDATE t_p35973246_school_wallet_system.withdrawal_requests SET status = 'approved', processed_at = NOW() WHERE id = %s",
-                        (request_id,)
+                        f"UPDATE t_p35973246_school_wallet_system.withdrawal_requests SET status = 'approved', processed_at = NOW() WHERE id = {request_id}"
                     )
                     conn.commit()
                 
@@ -209,8 +202,7 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
             elif action == 'reject_withdrawal':
                 request_id = body_data.get('requestId')
                 cur.execute(
-                    "UPDATE t_p35973246_school_wallet_system.withdrawal_requests SET status = 'rejected', processed_at = NOW() WHERE id = %s",
-                    (request_id,)
+                    f"UPDATE t_p35973246_school_wallet_system.withdrawal_requests SET status = 'rejected', processed_at = NOW() WHERE id = {request_id}"
                 )
                 conn.commit()
                 
@@ -220,42 +212,29 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                     'body': json.dumps({'status': 'rejected'}),
                     'isBase64Encoded': False
                 }
-            
-            elif action == 'update_balance':
-                user_id = body_data.get('userId')
-                amount = body_data.get('amount')
-                
-                cur.execute(
-                    "UPDATE t_p35973246_school_wallet_system.users SET balance = balance + %s WHERE id = %s RETURNING balance",
-                    (amount, user_id)
-                )
-                new_balance = cur.fetchone()[0]
-                conn.commit()
-                
-                return {
-                    'statusCode': 200,
-                    'headers': {'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*'},
-                    'body': json.dumps({'balance': float(new_balance)}),
-                    'isBase64Encoded': False
-                }
         
         elif method == 'GET':
-            action = event.get('queryStringParameters', {}).get('action')
+            action = event.get('queryStringParameters', {}).get('action', '')
             
             if action == 'users':
-                cur.execute("SELECT id, full_name, balance FROM t_p35973246_school_wallet_system.users ORDER BY balance DESC")
+                cur.execute("SELECT id, full_name, balance, created_at FROM t_p35973246_school_wallet_system.users ORDER BY created_at DESC")
                 users = cur.fetchall()
                 
                 return {
                     'statusCode': 200,
                     'headers': {'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*'},
-                    'body': json.dumps([{'id': u[0], 'fullName': u[1], 'balance': float(u[2])} for u in users]),
+                    'body': json.dumps([{
+                        'id': u[0], 
+                        'fullName': u[1], 
+                        'balance': float(u[2]),
+                        'createdAt': u[3].isoformat() if u[3] else None
+                    } for u in users]),
                     'isBase64Encoded': False
                 }
             
             elif action == 'deposit_requests':
                 cur.execute("""
-                    SELECT dr.id, dr.user_id, u.full_name, dr.amount, dr.status, dr.created_at
+                    SELECT dr.id, dr.user_id, u.full_name, dr.amount, dr.status, dr.created_at 
                     FROM t_p35973246_school_wallet_system.deposit_requests dr
                     JOIN t_p35973246_school_wallet_system.users u ON dr.user_id = u.id
                     ORDER BY dr.created_at DESC
@@ -266,19 +245,19 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                     'statusCode': 200,
                     'headers': {'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*'},
                     'body': json.dumps([{
-                        'id': r[0], 
-                        'userId': r[1], 
-                        'userName': r[2], 
-                        'amount': float(r[3]), 
+                        'id': r[0],
+                        'userId': r[1],
+                        'userName': r[2],
+                        'amount': float(r[3]),
                         'status': r[4],
-                        'date': r[5].strftime('%d.%m.%Y %H:%M')
+                        'createdAt': r[5].isoformat() if r[5] else None
                     } for r in requests]),
                     'isBase64Encoded': False
                 }
             
             elif action == 'withdrawal_requests':
                 cur.execute("""
-                    SELECT wr.id, wr.user_id, u.full_name, wr.amount, wr.status, wr.created_at
+                    SELECT wr.id, wr.user_id, u.full_name, wr.amount, wr.status, wr.created_at 
                     FROM t_p35973246_school_wallet_system.withdrawal_requests wr
                     JOIN t_p35973246_school_wallet_system.users u ON wr.user_id = u.id
                     ORDER BY wr.created_at DESC
@@ -289,32 +268,48 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                     'statusCode': 200,
                     'headers': {'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*'},
                     'body': json.dumps([{
-                        'id': r[0], 
-                        'userId': r[1], 
-                        'userName': r[2], 
-                        'amount': float(r[3]), 
+                        'id': r[0],
+                        'userId': r[1],
+                        'userName': r[2],
+                        'amount': float(r[3]),
                         'status': r[4],
-                        'date': r[5].strftime('%d.%m.%Y %H:%M')
+                        'createdAt': r[5].isoformat() if r[5] else None
                     } for r in requests]),
                     'isBase64Encoded': False
                 }
             
             elif action == 'user_balance':
                 user_id = event.get('queryStringParameters', {}).get('userId')
-                cur.execute("SELECT balance FROM t_p35973246_school_wallet_system.users WHERE id = %s", (user_id,))
+                cur.execute(f"SELECT balance FROM t_p35973246_school_wallet_system.users WHERE id = {user_id}")
                 result = cur.fetchone()
                 
-                return {
-                    'statusCode': 200,
-                    'headers': {'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*'},
-                    'body': json.dumps({'balance': float(result[0]) if result else 0}),
-                    'isBase64Encoded': False
-                }
+                if result:
+                    return {
+                        'statusCode': 200,
+                        'headers': {'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*'},
+                        'body': json.dumps({'balance': float(result[0])}),
+                        'isBase64Encoded': False
+                    }
+                else:
+                    return {
+                        'statusCode': 404,
+                        'headers': {'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*'},
+                        'body': json.dumps({'error': 'Пользователь не найден'}),
+                        'isBase64Encoded': False
+                    }
         
         return {
-            'statusCode': 404,
+            'statusCode': 405,
             'headers': {'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*'},
-            'body': json.dumps({'error': 'Not found'}),
+            'body': json.dumps({'error': 'Method not allowed'}),
+            'isBase64Encoded': False
+        }
+    
+    except Exception as e:
+        return {
+            'statusCode': 500,
+            'headers': {'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*'},
+            'body': json.dumps({'error': str(e)}),
             'isBase64Encoded': False
         }
     
