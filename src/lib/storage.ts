@@ -24,6 +24,7 @@ export const storage = {
 
   setDepositRequests: (requests: DepositRequest[]) => {
     localStorage.setItem('depositRequests', JSON.stringify(requests));
+    window.dispatchEvent(new StorageEvent('storage', { key: 'depositRequests' }));
   },
 
   addDepositRequest: (request: Omit<DepositRequest, 'id' | 'date' | 'status'>) => {
@@ -46,6 +47,7 @@ export const storage = {
 
   setWithdrawalRequests: (requests: WithdrawalRequest[]) => {
     localStorage.setItem('withdrawalRequests', JSON.stringify(requests));
+    window.dispatchEvent(new StorageEvent('storage', { key: 'withdrawalRequests' }));
   },
 
   addWithdrawalRequest: (request: Omit<WithdrawalRequest, 'id' | 'date' | 'status'>) => {
@@ -63,32 +65,44 @@ export const storage = {
 
   updateDepositRequestStatus: (id: number, status: 'approved' | 'rejected') => {
     const requests = storage.getDepositRequests();
+    const request = requests.find(req => req.id === id);
+    
+    if (status === 'approved' && request) {
+      storage.updateUserBalance(request.userName, request.amount);
+      
+      storage.addTransaction(request.userName, {
+        type: 'deposit',
+        amount: request.amount,
+        description: 'Пополнение одобрено',
+        timestamp: new Date().toISOString()
+      });
+    }
+    
     const updated = requests.map((req) =>
       req.id === id ? { ...req, status } : req
     );
     storage.setDepositRequests(updated);
-    
-    if (status === 'approved') {
-      const request = requests.find(req => req.id === id);
-      if (request) {
-        storage.updateUserBalance(request.userId, request.amount);
-      }
-    }
   },
 
   updateWithdrawalRequestStatus: (id: number, status: 'approved' | 'rejected') => {
     const requests = storage.getWithdrawalRequests();
+    const request = requests.find(req => req.id === id);
+    
+    if (status === 'approved' && request) {
+      storage.updateUserBalance(request.userName, -request.amount);
+      
+      storage.addTransaction(request.userName, {
+        type: 'withdrawal',
+        amount: -request.amount,
+        description: 'Вывод одобрен',
+        timestamp: new Date().toISOString()
+      });
+    }
+    
     const updated = requests.map((req) =>
       req.id === id ? { ...req, status } : req
     );
     storage.setWithdrawalRequests(updated);
-    
-    if (status === 'approved') {
-      const request = requests.find(req => req.id === id);
-      if (request) {
-        storage.updateUserBalance(request.userId, -request.amount);
-      }
-    }
   },
 
   getUserBalance: (userId: string): number => {
@@ -100,12 +114,14 @@ export const storage = {
     const balances = JSON.parse(localStorage.getItem('userBalances') || '{}');
     balances[userId] = (balances[userId] || 0) + amount;
     localStorage.setItem('userBalances', JSON.stringify(balances));
+    window.dispatchEvent(new StorageEvent('storage', { key: 'userBalances' }));
   },
 
   setUserBalance: (userId: string, balance: number) => {
     const balances = JSON.parse(localStorage.getItem('userBalances') || '{}');
     balances[userId] = balance;
     localStorage.setItem('userBalances', JSON.stringify(balances));
+    window.dispatchEvent(new StorageEvent('storage', { key: 'userBalances' }));
   },
 
   getUsers: () => {
@@ -115,6 +131,7 @@ export const storage = {
 
   saveUsers: (users: any[]) => {
     localStorage.setItem('zov_users', JSON.stringify(users));
+    window.dispatchEvent(new StorageEvent('storage', { key: 'zov_users' }));
   },
 
   registerUser: (fullName: string, pinCode: string) => {

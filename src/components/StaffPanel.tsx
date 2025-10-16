@@ -51,7 +51,7 @@ export default function StaffPanel({ onLogout }: StaffPanelProps) {
     const interval = setInterval(loadUsers, 2000);
     
     const handleStorageChange = (e: StorageEvent) => {
-      if (e.key === 'users' || e.key?.includes('balance_')) {
+      if (e.key === 'zov_users' || e.key === 'userBalances') {
         loadUsers();
       }
     };
