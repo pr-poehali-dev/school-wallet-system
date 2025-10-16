@@ -67,7 +67,7 @@ export default function Index() {
   };
 
   const handleProfileUpdate = async (newFullName: string, newPinCode: string) => {
-    const balance = await api.getUserBalance(user.id);
+    const { balance } = await api.getUserBalance(user.id);
     setUser({ ...user, fullName: newFullName, pinCode: newPinCode, balance });
   };
 
@@ -84,7 +84,7 @@ export default function Index() {
       try {
         const userData = JSON.parse(savedAuth);
         if (userData.id && typeof userData.id === 'number') {
-          api.getUserBalance(userData.id).then(balance => {
+          api.getUserBalance(userData.id).then(({ balance }) => {
             setUser({ ...userData, balance });
             setIsAuthenticated(true);
           }).catch(() => {
