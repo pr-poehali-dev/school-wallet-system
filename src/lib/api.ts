@@ -1,127 +1,223 @@
-const API_URL = 'https://functions.poehali.dev/e6ffe770-e69c-4e1b-b374-786d1a48dae2';
+interface User {
+  id: number;
+  fullName: string;
+  balance: number;
+  pinCode: string;
+}
+
+interface DepositRequest {
+  id: number;
+  userId: number;
+  userName: string;
+  amount: number;
+  status: 'pending' | 'approved' | 'rejected';
+  createdAt: string;
+}
+
+interface WithdrawalRequest {
+  id: number;
+  userId: number;
+  userName: string;
+  amount: number;
+  status: 'pending' | 'approved' | 'rejected';
+  createdAt: string;
+}
+
+const STORAGE_KEYS = {
+  USERS: 'wallet_users',
+  DEPOSITS: 'wallet_deposits',
+  WITHDRAWALS: 'wallet_withdrawals',
+  COUNTER: 'wallet_counter'
+};
+
+function getUsers(): User[] {
+  const data = localStorage.getItem(STORAGE_KEYS.USERS);
+  return data ? JSON.parse(data) : [];
+}
+
+function saveUsers(users: User[]) {
+  localStorage.setItem(STORAGE_KEYS.USERS, JSON.stringify(users));
+}
+
+function getDeposits(): DepositRequest[] {
+  const data = localStorage.getItem(STORAGE_KEYS.DEPOSITS);
+  return data ? JSON.parse(data) : [];
+}
+
+function saveDeposits(deposits: DepositRequest[]) {
+  localStorage.setItem(STORAGE_KEYS.DEPOSITS, JSON.stringify(deposits));
+}
+
+function getWithdrawals(): WithdrawalRequest[] {
+  const data = localStorage.getItem(STORAGE_KEYS.WITHDRAWALS);
+  return data ? JSON.parse(data) : [];
+}
+
+function saveWithdrawals(withdrawals: WithdrawalRequest[]) {
+  localStorage.setItem(STORAGE_KEYS.WITHDRAWALS, JSON.stringify(withdrawals));
+}
+
+function getNextId(): number {
+  const counter = localStorage.getItem(STORAGE_KEYS.COUNTER);
+  const id = counter ? parseInt(counter) + 1 : 1;
+  localStorage.setItem(STORAGE_KEYS.COUNTER, id.toString());
+  return id;
+}
 
 export const api = {
   async register(fullName: string, pinCode: string) {
-    try {
-      console.log('Registering:', fullName, pinCode.length, 'chars');
-      const response = await fetch(API_URL, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ action: 'register', fullName, pinCode })
-      });
-      console.log('Response status:', response.status);
-      if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.error || 'Ошибка регистрации');
-      }
-      const data = await response.json();
-      console.log('Registration success:', data);
-      return data;
-    } catch (error: any) {
-      console.error('Registration error:', error);
-      throw new Error(error.message || 'Не удалось подключиться к серверу');
+    const users = getUsers();
+    
+    if (users.find(u => u.fullName === fullName)) {
+      throw new Error('ФИО уже занято');
     }
+    
+    const newUser: User = {
+      id: getNextId(),
+      fullName,
+      pinCode,
+      balance: 0
+    };
+    
+    users.push(newUser);
+    saveUsers(users);
+    
+    return { id: newUser.id, fullName: newUser.fullName, balance: newUser.balance };
   },
 
   async login(fullName: string, pinCode: string) {
-    try {
-      const response = await fetch(API_URL, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ action: 'login', fullName, pinCode })
-      });
-      if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.error || 'Ошибка входа');
-      }
-      return response.json();
-    } catch (error: any) {
-      console.error('Login error:', error);
-      throw new Error(error.message || 'Не удалось подключиться к серверу');
+    const users = getUsers();
+    const user = users.find(u => u.fullName === fullName && u.pinCode === pinCode);
+    
+    if (!user) {
+      throw new Error('Неверное ФИО или PIN-код');
     }
-  },
-
-  async getUsers() {
-    const response = await fetch(`${API_URL}?action=users`);
-    return response.json();
+    
+    return { id: user.id, fullName: user.fullName, balance: user.balance };
   },
 
   async getUserBalance(userId: number) {
-    const response = await fetch(`${API_URL}?action=user_balance&userId=${userId}`);
-    const data = await response.json();
-    return data.balance;
-  },
-
-  async updateBalance(userId: number, amount: number) {
-    const response = await fetch(API_URL, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ action: 'update_balance', userId, amount })
-    });
-    return response.json();
+    const users = getUsers();
+    const user = users.find(u => u.id === userId);
+    return { balance: user?.balance || 0 };
   },
 
   async createDepositRequest(userId: number, amount: number) {
-    const response = await fetch(API_URL, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ action: 'deposit_request', userId, amount })
-    });
-    return response.json();
+    const users = getUsers();
+    const user = users.find(u => u.id === userId);
+    
+    if (!user) throw new Error('Пользователь не найден');
+    
+    const deposits = getDeposits();
+    const newRequest: DepositRequest = {
+      id: getNextId(),
+      userId,
+      userName: user.fullName,
+      amount,
+      status: 'pending',
+      createdAt: new Date().toISOString()
+    };
+    
+    deposits.push(newRequest);
+    saveDeposits(deposits);
+    
+    return { id: newRequest.id, status: 'pending' };
   },
 
   async createWithdrawalRequest(userId: number, amount: number) {
-    const response = await fetch(API_URL, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ action: 'withdrawal_request', userId, amount })
-    });
-    return response.json();
+    const users = getUsers();
+    const user = users.find(u => u.id === userId);
+    
+    if (!user) throw new Error('Пользователь не найден');
+    if (user.balance < amount) throw new Error('Недостаточно средств');
+    
+    const withdrawals = getWithdrawals();
+    const newRequest: WithdrawalRequest = {
+      id: getNextId(),
+      userId,
+      userName: user.fullName,
+      amount,
+      status: 'pending',
+      createdAt: new Date().toISOString()
+    };
+    
+    withdrawals.push(newRequest);
+    saveWithdrawals(withdrawals);
+    
+    return { id: newRequest.id, status: 'pending' };
+  },
+
+  async getUsers() {
+    return getUsers().map(({ pinCode, ...user }) => user);
   },
 
   async getDepositRequests() {
-    const response = await fetch(`${API_URL}?action=deposit_requests`);
-    return response.json();
+    return getDeposits();
   },
 
   async getWithdrawalRequests() {
-    const response = await fetch(`${API_URL}?action=withdrawal_requests`);
-    return response.json();
+    return getWithdrawals();
   },
 
   async approveDepositRequest(requestId: number) {
-    const response = await fetch(API_URL, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ action: 'approve_deposit', requestId })
-    });
-    return response.json();
+    const deposits = getDeposits();
+    const request = deposits.find(r => r.id === requestId);
+    
+    if (request) {
+      request.status = 'approved';
+      saveDeposits(deposits);
+      
+      const users = getUsers();
+      const user = users.find(u => u.id === request.userId);
+      if (user) {
+        user.balance += request.amount;
+        saveUsers(users);
+      }
+    }
+    
+    return { status: 'approved' };
   },
 
   async rejectDepositRequest(requestId: number) {
-    const response = await fetch(API_URL, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ action: 'reject_deposit', requestId })
-    });
-    return response.json();
+    const deposits = getDeposits();
+    const request = deposits.find(r => r.id === requestId);
+    
+    if (request) {
+      request.status = 'rejected';
+      saveDeposits(deposits);
+    }
+    
+    return { status: 'rejected' };
   },
 
   async approveWithdrawalRequest(requestId: number) {
-    const response = await fetch(API_URL, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ action: 'approve_withdrawal', requestId })
-    });
-    return response.json();
+    const withdrawals = getWithdrawals();
+    const request = withdrawals.find(r => r.id === requestId);
+    
+    if (request) {
+      request.status = 'approved';
+      saveWithdrawals(withdrawals);
+      
+      const users = getUsers();
+      const user = users.find(u => u.id === request.userId);
+      if (user) {
+        user.balance -= request.amount;
+        saveUsers(users);
+      }
+    }
+    
+    return { status: 'approved' };
   },
 
   async rejectWithdrawalRequest(requestId: number) {
-    const response = await fetch(API_URL, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ action: 'reject_withdrawal', requestId })
-    });
-    return response.json();
-  },
+    const withdrawals = getWithdrawals();
+    const request = withdrawals.find(r => r.id === requestId);
+    
+    if (request) {
+      request.status = 'rejected';
+      saveWithdrawals(withdrawals);
+    }
+    
+    return { status: 'rejected' };
+  }
 };
