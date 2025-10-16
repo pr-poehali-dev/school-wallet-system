@@ -10,7 +10,7 @@ interface DashboardProps {
 }
 
 export default function Dashboard({ user, onNavigate }: DashboardProps) {
-  const balance = user?.balance || 0;
+  const balance = typeof user?.balance === 'number' ? user.balance : 0;
   const [stats, setStats] = useState<any>({ lastVisit: null, casinoWins: 0, totalTransactions: 0 });
 
   useEffect(() => {

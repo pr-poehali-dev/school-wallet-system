@@ -155,7 +155,7 @@ export default function Requests({ user }: RequestsProps) {
               <div className="p-3 rounded-lg bg-muted">
                 <p className="text-sm">
                   Доступно для вывода:{' '}
-                  <span className="font-bold">₽{(user?.balance || 0).toFixed(2)}</span>
+                  <span className="font-bold">₽{(typeof user?.balance === 'number' ? user.balance : 0).toFixed(2)}</span>
                 </p>
               </div>
               <Button
