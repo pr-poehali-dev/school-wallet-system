@@ -12,6 +12,7 @@ import Requests from '@/components/Requests';
 import Profile from '@/components/Profile';
 import Leaderboard from '@/components/Leaderboard';
 import { storage } from '@/lib/storage';
+import { api } from '@/lib/api';
 
 export default function Index() {
   const navigate = useNavigate();
@@ -23,32 +24,7 @@ export default function Index() {
   const [pinCode, setPinCode] = useState('');
   const [isRegistering, setIsRegistering] = useState(false);
 
-  const handleLogin = () => {
-    if (!fullName || !pinCode) {
-      alert('Пожалуйста, заполните все поля');
-      return;
-    }
-
-    if (pinCode.length !== 4) {
-      alert('PIN-код должен содержать 4 цифры');
-      return;
-    }
-
-    const existingUser = storage.getUser(fullName, pinCode);
-    if (!existingUser) {
-      alert('Неверное ФИО или PIN-код');
-      return;
-    }
-
-    storage.updateLastVisit(fullName);
-    const balance = storage.getUserBalance(fullName);
-    const userData = { fullName, pinCode, balance };
-    setUser(userData);
-    setIsAuthenticated(true);
-    localStorage.setItem('zov_current_user', JSON.stringify(userData));
-  };
-
-  const handleRegister = () => {
+  const handleLogin = async () => {
     if (!fullName || !pinCode) {
       alert('Пожалуйста, заполните все поля');
       return;
@@ -60,9 +36,7 @@ export default function Index() {
     }
 
     try {
-      storage.registerUser(fullName, pinCode);
-      const balance = storage.getUserBalance(fullName);
-      const userData = { fullName, pinCode, balance };
+      const userData = await api.login(fullName, pinCode);
       setUser(userData);
       setIsAuthenticated(true);
       localStorage.setItem('zov_current_user', JSON.stringify(userData));
@@ -71,26 +45,49 @@ export default function Index() {
     }
   };
 
-  const handleProfileUpdate = (newFullName: string, newPinCode: string) => {
-    setUser({ fullName: newFullName, pinCode: newPinCode, balance: storage.getUserBalance(newFullName) });
+  const handleRegister = async () => {
+    if (!fullName || !pinCode) {
+      alert('Пожалуйста, заполните все поля');
+      return;
+    }
+
+    if (pinCode.length !== 4) {
+      alert('PIN-код должен содержать 4 цифры');
+      return;
+    }
+
+    try {
+      const userData = await api.register(fullName, pinCode);
+      setUser(userData);
+      setIsAuthenticated(true);
+      localStorage.setItem('zov_current_user', JSON.stringify(userData));
+    } catch (error: any) {
+      alert(error.message);
+    }
+  };
+
+  const handleProfileUpdate = async (newFullName: string, newPinCode: string) => {
+    const balance = await api.getUserBalance(user.id);
+    setUser({ ...user, fullName: newFullName, pinCode: newPinCode, balance });
   };
 
   useEffect(() => {
     const savedAuth = localStorage.getItem('zov_current_user');
     if (savedAuth) {
       const userData = JSON.parse(savedAuth);
-      const balance = storage.getUserBalance(userData.fullName);
-      setUser({ ...userData, balance });
-      setIsAuthenticated(true);
+      api.getUserBalance(userData.id).then(balance => {
+        setUser({ ...userData, balance });
+        setIsAuthenticated(true);
+      });
     }
   }, []);
 
   useEffect(() => {
     if (user) {
-      const interval = setInterval(() => {
-        const balance = storage.getUserBalance(user.fullName);
+      const interval = setInterval(async () => {
+        const balance = await api.getUserBalance(user.id);
         setUser((prev: any) => ({ ...prev, balance }));
-      }, 100);
+      }, 1000);
       return () => clearInterval(interval);
     }
   }, [user]);

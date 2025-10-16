@@ -1,0 +1,113 @@
+const API_URL = 'https://functions.poehali.dev/e6ffe770-e69c-4e1b-b374-786d1a48dae2';
+
+export const api = {
+  async register(fullName: string, pinCode: string) {
+    const response = await fetch(API_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ action: 'register', fullName, pinCode })
+    });
+    if (!response.ok) {
+      const error = await response.json();
+      throw new Error(error.error || 'Ошибка регистрации');
+    }
+    return response.json();
+  },
+
+  async login(fullName: string, pinCode: string) {
+    const response = await fetch(API_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ action: 'login', fullName, pinCode })
+    });
+    if (!response.ok) {
+      const error = await response.json();
+      throw new Error(error.error || 'Ошибка входа');
+    }
+    return response.json();
+  },
+
+  async getUsers() {
+    const response = await fetch(`${API_URL}?action=users`);
+    return response.json();
+  },
+
+  async getUserBalance(userId: number) {
+    const response = await fetch(`${API_URL}?action=user_balance&userId=${userId}`);
+    const data = await response.json();
+    return data.balance;
+  },
+
+  async updateBalance(userId: number, amount: number) {
+    const response = await fetch(API_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ action: 'update_balance', userId, amount })
+    });
+    return response.json();
+  },
+
+  async createDepositRequest(userId: number, amount: number) {
+    const response = await fetch(API_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ action: 'deposit_request', userId, amount })
+    });
+    return response.json();
+  },
+
+  async createWithdrawalRequest(userId: number, amount: number) {
+    const response = await fetch(API_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ action: 'withdrawal_request', userId, amount })
+    });
+    return response.json();
+  },
+
+  async getDepositRequests() {
+    const response = await fetch(`${API_URL}?action=deposit_requests`);
+    return response.json();
+  },
+
+  async getWithdrawalRequests() {
+    const response = await fetch(`${API_URL}?action=withdrawal_requests`);
+    return response.json();
+  },
+
+  async approveDeposit(requestId: number) {
+    const response = await fetch(API_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ action: 'approve_deposit', requestId })
+    });
+    return response.json();
+  },
+
+  async rejectDeposit(requestId: number) {
+    const response = await fetch(API_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ action: 'reject_deposit', requestId })
+    });
+    return response.json();
+  },
+
+  async approveWithdrawal(requestId: number) {
+    const response = await fetch(API_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ action: 'approve_withdrawal', requestId })
+    });
+    return response.json();
+  },
+
+  async rejectWithdrawal(requestId: number) {
+    const response = await fetch(API_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.dumps({ action: 'reject_withdrawal', requestId })
+    });
+    return response.json();
+  },
+};

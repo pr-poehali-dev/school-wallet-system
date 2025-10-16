@@ -8,6 +8,7 @@ import Icon from '@/components/ui/icon';
 import { toast } from '@/components/ui/use-toast';
 import { Badge } from '@/components/ui/badge';
 import { storage } from '@/lib/storage';
+import { api } from '@/lib/api';
 
 interface RequestsProps {
   user: any;
@@ -22,19 +23,22 @@ export default function Requests({ user }: RequestsProps) {
     loadUserRequests();
   }, [user]);
 
-  const loadUserRequests = () => {
-    const deposits = storage.getDepositRequests().filter(req => req.userId === user?.fullName);
-    const withdrawals = storage.getWithdrawalRequests().filter(req => req.userId === user?.fullName);
+  const loadUserRequests = async () => {
+    const deposits = await api.getDepositRequests();
+    const withdrawals = await api.getWithdrawalRequests();
+    
+    const userDeposits = deposits.filter((req: any) => req.userId === user?.id);
+    const userWithdrawals = withdrawals.filter((req: any) => req.userId === user?.id);
     
     const combined = [
-      ...deposits.map(d => ({ ...d, type: 'deposit' })),
-      ...withdrawals.map(w => ({ ...w, type: 'withdrawal' }))
+      ...userDeposits.map((d: any) => ({ ...d, type: 'deposit' })),
+      ...userWithdrawals.map((w: any) => ({ ...w, type: 'withdrawal' }))
     ].sort((a, b) => b.id - a.id);
     
     setUserRequests(combined);
   };
 
-  const handleDepositRequest = () => {
+  const handleDepositRequest = async () => {
     const amount = parseFloat(depositAmount);
     if (!amount || amount <= 0) {
       toast({
@@ -45,11 +49,7 @@ export default function Requests({ user }: RequestsProps) {
       return;
     }
 
-    storage.addDepositRequest({
-      userId: user?.fullName || '',
-      userName: user?.fullName || '',
-      amount,
-    });
+    await api.createDepositRequest(user?.id || 0, amount);
 
     toast({
       title: 'Заявка отправлена',
@@ -59,7 +59,7 @@ export default function Requests({ user }: RequestsProps) {
     loadUserRequests();
   };
 
-  const handleWithdrawRequest = () => {
+  const handleWithdrawRequest = async () => {
     const amount = parseFloat(withdrawAmount);
     if (!amount || amount <= 0) {
       toast({
@@ -79,11 +79,7 @@ export default function Requests({ user }: RequestsProps) {
       return;
     }
 
-    storage.addWithdrawalRequest({
-      userId: user?.fullName || '',
-      userName: user?.fullName || '',
-      amount,
-    });
+    await api.createWithdrawalRequest(user?.id || 0, amount);
 
     toast({
       title: 'Заявка отправлена',

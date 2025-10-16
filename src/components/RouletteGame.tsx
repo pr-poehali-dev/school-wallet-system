@@ -5,9 +5,11 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import Icon from '@/components/ui/icon';
 import { storage } from '@/lib/storage';
+import { api } from '@/lib/api';
 
 interface RouletteGameProps {
   user: {
+    id: number;
     fullName: string;
     pinCode: string;
     balance: number;
@@ -33,7 +35,7 @@ export default function RouletteGame({ user }: RouletteGameProps) {
       return;
     }
 
-    storage.updateUserBalance(user.fullName, -amount);
+    await api.updateBalance(user.id, -amount);
     
     setIsSpinning(true);
     setResult(null);
@@ -45,29 +47,10 @@ export default function RouletteGame({ user }: RouletteGameProps) {
       setIsSpinning(false);
 
       if (isWin) {
-        storage.updateUserBalance(user.fullName, amount * 2);
+        await api.updateBalance(user.id, amount * 2);
         setMessage(`🎉 Победа! Вы выиграли ${amount * 2} 💎`);
-        
-        storage.addTransaction(user.fullName, {
-          type: 'game',
-          amount: amount,
-          description: 'Рулетка (Выигрыш)',
-          timestamp: new Date().toISOString()
-        });
-        
-        const stats = storage.getUserStats(user.fullName);
-        storage.updateUserStats(user.fullName, {
-          casinoWins: (stats.casinoWins || 0) + amount
-        });
       } else {
         setMessage(`😔 Проигрыш! Вы потеряли ${amount} 💎`);
-        
-        storage.addTransaction(user.fullName, {
-          type: 'game',
-          amount: -amount,
-          description: 'Рулетка (Проигрыш)',
-          timestamp: new Date().toISOString()
-        });
       }
       setBetAmount('');
     }, 3000);

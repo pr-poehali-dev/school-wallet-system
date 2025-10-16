@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import Icon from '@/components/ui/icon';
 import { storage } from '@/lib/storage';
+import { api } from '@/lib/api';
 
 interface LeaderboardProps {
   currentUser?: {
@@ -19,22 +20,18 @@ export default function Leaderboard({ currentUser }: LeaderboardProps) {
     return () => clearInterval(interval);
   }, [currentUser]);
 
-  const loadLeaderboard = () => {
-    const allUsers = storage.getUsers();
-    const usersWithBalances = allUsers.map((u: any) => ({
-      ...u,
-      balance: storage.getUserBalance(u.fullName)
-    }));
+  const loadLeaderboard = async () => {
+    const allUsers = await api.getUsers();
     
-    const sorted = usersWithBalances
-      .sort((a, b) => b.balance - a.balance)
+    const sorted = allUsers
+      .sort((a: any, b: any) => b.balance - a.balance)
       .slice(0, 10);
     
     setTopUsers(sorted);
 
     if (currentUser) {
-      const allSorted = usersWithBalances.sort((a, b) => b.balance - a.balance);
-      const rank = allSorted.findIndex(u => u.fullName === currentUser.fullName);
+      const allSorted = allUsers.sort((a: any, b: any) => b.balance - a.balance);
+      const rank = allSorted.findIndex((u: any) => u.fullName === currentUser.fullName);
       setCurrentUserRank(rank >= 0 ? rank + 1 : null);
     }
   };

@@ -1,0 +1,18 @@
+{
+  "tests": [
+    {
+      "name": "Get users list",
+      "method": "GET",
+      "path": "/?action=users",
+      "expectedStatus": 200,
+      "bodyMatcher": "partial"
+    },
+    {
+      "name": "Get deposit requests",
+      "method": "GET",
+      "path": "/?action=deposit_requests",
+      "expectedStatus": 200,
+      "bodyMatcher": "partial"
+    }
+  ]
+}

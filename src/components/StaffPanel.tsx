@@ -8,6 +8,7 @@ import Icon from '@/components/ui/icon';
 import { Badge } from '@/components/ui/badge';
 import { toast } from '@/components/ui/use-toast';
 import { storage } from '@/lib/storage';
+import { api } from '@/lib/api';
 
 interface StaffPanelProps {
   onLogout: () => void;
@@ -37,9 +38,9 @@ export default function StaffPanel({ onLogout }: StaffPanelProps) {
     };
   }, []);
 
-  const loadRequests = () => {
-    const deposits = storage.getDepositRequests();
-    const withdrawals = storage.getWithdrawalRequests();
+  const loadRequests = async () => {
+    const deposits = await api.getDepositRequests();
+    const withdrawals = await api.getWithdrawalRequests();
     setDepositRequests(deposits);
     setWithdrawalRequests(withdrawals);
   };
@@ -64,16 +65,12 @@ export default function StaffPanel({ onLogout }: StaffPanelProps) {
     };
   }, []);
 
-  const loadUsers = () => {
-    const allUsers = storage.getUsers();
-    const usersWithBalances = allUsers.map((u: any) => ({
-      ...u,
-      balance: storage.getUserBalance(u.fullName)
-    }));
-    setUsers(usersWithBalances);
+  const loadUsers = async () => {
+    const allUsers = await api.getUsers();
+    setUsers(allUsers);
   };
 
-  const handleDeposit = () => {
+  const handleDeposit = async () => {
     if (!selectedUser || !depositAmount) {
       toast({
         title: 'Ошибка',
@@ -84,26 +81,19 @@ export default function StaffPanel({ onLogout }: StaffPanelProps) {
     }
 
     const amount = parseInt(depositAmount);
-    storage.updateUserBalance(selectedUser, amount);
-    
-    storage.addTransaction(selectedUser, {
-      type: 'staff_add',
-      amount: amount,
-      description: 'Начисление от персонала',
-      timestamp: new Date().toISOString()
-    });
+    await api.updateBalance(parseInt(selectedUser), amount);
 
     toast({
       title: 'Баланс пополнен',
-      description: `Пользователю ${selectedUser} начислено ${amount} 💎`,
+      description: `Пользователю начислено ${amount} 💎`,
     });
     setSelectedUser('');
     setDepositAmount('');
     loadUsers();
   };
 
-  const handleApproveDeposit = (requestId: number) => {
-    storage.updateDepositRequestStatus(requestId, 'approved');
+  const handleApproveDeposit = async (requestId: number) => {
+    await api.approveDeposit(requestId);
     toast({
       title: 'Заявка одобрена',
       description: 'Заявка на пополнение одобрена',
@@ -111,8 +101,8 @@ export default function StaffPanel({ onLogout }: StaffPanelProps) {
     loadRequests();
   };
 
-  const handleRejectDeposit = (requestId: number) => {
-    storage.updateDepositRequestStatus(requestId, 'rejected');
+  const handleRejectDeposit = async (requestId: number) => {
+    await api.rejectDeposit(requestId);
     toast({
       title: 'Заявка отклонена',
       description: 'Заявка на пополнение отклонена',
@@ -121,8 +111,8 @@ export default function StaffPanel({ onLogout }: StaffPanelProps) {
     loadRequests();
   };
 
-  const handleApproveWithdrawal = (requestId: number) => {
-    storage.updateWithdrawalRequestStatus(requestId, 'approved');
+  const handleApproveWithdrawal = async (requestId: number) => {
+    await api.approveWithdrawal(requestId);
     toast({
       title: 'Заявка одобрена',
       description: 'Заявка на вывод одобрена',
@@ -130,8 +120,8 @@ export default function StaffPanel({ onLogout }: StaffPanelProps) {
     loadRequests();
   };
 
-  const handleRejectWithdrawal = (requestId: number) => {
-    storage.updateWithdrawalRequestStatus(requestId, 'rejected');
+  const handleRejectWithdrawal = async (requestId: number) => {
+    await api.rejectWithdrawal(requestId);
     toast({
       title: 'Заявка отклонена',
       description: 'Заявка на вывод отклонена',
@@ -353,7 +343,7 @@ export default function StaffPanel({ onLogout }: StaffPanelProps) {
                   >
                     <option value="">-- Выберите пользователя --</option>
                     {users.map((user) => (
-                      <option key={user.fullName} value={user.fullName}>
+                      <option key={user.id} value={user.id}>
                         {user.fullName} (Баланс: {user.balance} 💎)
                       </option>
                     ))}
