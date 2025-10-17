@@ -212,6 +212,53 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                     'body': json.dumps({'status': 'rejected'}),
                     'isBase64Encoded': False
                 }
+            
+            elif action == 'update_balance':
+                user_id = body_data.get('userId')
+                amount = body_data.get('amount')
+                
+                cur.execute(
+                    f"UPDATE t_p35973246_school_wallet_system.users SET balance = balance + {amount} WHERE id = {user_id}"
+                )
+                conn.commit()
+                
+                return {
+                    'statusCode': 200,
+                    'headers': {'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*'},
+                    'body': json.dumps({'status': 'success'}),
+                    'isBase64Encoded': False
+                }
+            
+            elif action == 'casino_bet':
+                user_id = body_data.get('userId')
+                amount = body_data.get('amount')
+                multiplier = body_data.get('multiplier')
+                won = body_data.get('won')
+                
+                cur.execute(
+                    f"""INSERT INTO t_p35973246_school_wallet_system.casino_games 
+                       (user_id, bet_amount, multiplier, won, created_at) 
+                       VALUES ({user_id}, {amount}, {multiplier}, {won}, NOW())"""
+                )
+                
+                if won:
+                    win_amount = int(amount * multiplier)
+                    cur.execute(
+                        f"UPDATE t_p35973246_school_wallet_system.users SET balance = balance + {win_amount} WHERE id = {user_id}"
+                    )
+                else:
+                    cur.execute(
+                        f"UPDATE t_p35973246_school_wallet_system.users SET balance = balance - {amount} WHERE id = {user_id}"
+                    )
+                
+                conn.commit()
+                
+                return {
+                    'statusCode': 200,
+                    'headers': {'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*'},
+                    'body': json.dumps({'status': 'success'}),
+                    'isBase64Encoded': False
+                }
         
         elif method == 'GET':
             action = event.get('queryStringParameters', {}).get('action', '')
@@ -288,6 +335,65 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                         'statusCode': 200,
                         'headers': {'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*'},
                         'body': json.dumps({'balance': float(result[0])}),
+                        'isBase64Encoded': False
+                    }
+                else:
+                    return {
+                        'statusCode': 404,
+                        'headers': {'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*'},
+                        'body': json.dumps({'error': 'Пользователь не найден'}),
+                        'isBase64Encoded': False
+                    }
+            
+            elif action == 'leaderboard':
+                cur.execute("""
+                    SELECT u.id, u.full_name, u.balance,
+                           COALESCE(SUM(CASE WHEN cg.won THEN cg.bet_amount * cg.multiplier ELSE 0 END), 0) as total_wins
+                    FROM t_p35973246_school_wallet_system.users u
+                    LEFT JOIN t_p35973246_school_wallet_system.casino_games cg ON u.id = cg.user_id
+                    GROUP BY u.id, u.full_name, u.balance
+                    ORDER BY u.balance DESC
+                    LIMIT 10
+                """)
+                leaders = cur.fetchall()
+                
+                return {
+                    'statusCode': 200,
+                    'headers': {'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*'},
+                    'body': json.dumps([{
+                        'id': l[0],
+                        'fullName': l[1],
+                        'balance': float(l[2]),
+                        'totalWins': float(l[3])
+                    } for l in leaders]),
+                    'isBase64Encoded': False
+                }
+            
+            elif action == 'user_stats':
+                user_id = event.get('queryStringParameters', {}).get('userId')
+                
+                cur.execute(f"""
+                    SELECT 
+                        u.created_at as last_visit,
+                        COALESCE(SUM(CASE WHEN cg.won THEN cg.bet_amount * cg.multiplier - cg.bet_amount ELSE 0 END), 0) as casino_wins,
+                        (SELECT COUNT(*) FROM t_p35973246_school_wallet_system.deposit_requests WHERE user_id = {user_id} AND status = 'approved') +
+                        (SELECT COUNT(*) FROM t_p35973246_school_wallet_system.withdrawal_requests WHERE user_id = {user_id} AND status = 'approved') as total_transactions
+                    FROM t_p35973246_school_wallet_system.users u
+                    LEFT JOIN t_p35973246_school_wallet_system.casino_games cg ON u.id = cg.user_id
+                    WHERE u.id = {user_id}
+                    GROUP BY u.id, u.created_at
+                """)
+                result = cur.fetchone()
+                
+                if result:
+                    return {
+                        'statusCode': 200,
+                        'headers': {'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*'},
+                        'body': json.dumps({
+                            'lastVisit': result[0].isoformat() if result[0] else None,
+                            'casinoWins': float(result[1]),
+                            'totalTransactions': int(result[2])
+                        }),
                         'isBase64Encoded': False
                     }
                 else:

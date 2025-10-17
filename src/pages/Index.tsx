@@ -102,7 +102,7 @@ export default function Index() {
   useEffect(() => {
     if (user) {
       const interval = setInterval(async () => {
-        const balance = await api.getUserBalance(user.id);
+        const { balance } = await api.getUserBalance(user.id);
         setUser((prev: any) => ({ ...prev, balance }));
       }, 1000);
       return () => clearInterval(interval);

@@ -21,17 +21,11 @@ export default function Leaderboard({ currentUser }: LeaderboardProps) {
   }, [currentUser]);
 
   const loadLeaderboard = async () => {
-    const allUsers = await api.getUsers();
-    
-    const sorted = allUsers
-      .sort((a: any, b: any) => b.balance - a.balance)
-      .slice(0, 10);
-    
-    setTopUsers(sorted);
+    const leaderboard = await api.getLeaderboard();
+    setTopUsers(leaderboard);
 
     if (currentUser) {
-      const allSorted = allUsers.sort((a: any, b: any) => b.balance - a.balance);
-      const rank = allSorted.findIndex((u: any) => u.fullName === currentUser.fullName);
+      const rank = leaderboard.findIndex((u: any) => u.fullName === currentUser.fullName);
       setCurrentUserRank(rank >= 0 ? rank + 1 : null);
     }
   };

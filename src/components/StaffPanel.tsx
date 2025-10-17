@@ -205,10 +205,12 @@ export default function StaffPanel({ onLogout }: StaffPanelProps) {
                         <div className="flex items-center justify-between">
                           <div>
                             <p className="font-semibold">{request.userName}</p>
-                            <p className="text-sm text-muted-foreground">{request.date}</p>
+                            <p className="text-sm text-muted-foreground">
+                              {new Date(request.createdAt).toLocaleString('ru-RU')}
+                            </p>
                           </div>
                           <div className="text-right">
-                            <p className="font-bold text-xl text-accent">₽{request.amount}</p>
+                            <p className="font-bold text-xl text-accent">₽{(typeof request.amount === 'number' ? request.amount : 0).toFixed(2)}</p>
                             {request.status !== 'pending' && (
                               <Badge variant={request.status === 'approved' ? 'default' : 'destructive'}>
                                 {request.status === 'approved' ? 'Одобрено' : 'Отклонено'}
@@ -278,10 +280,12 @@ export default function StaffPanel({ onLogout }: StaffPanelProps) {
                         <div className="flex items-center justify-between">
                           <div>
                             <p className="font-semibold">{request.userName}</p>
-                            <p className="text-sm text-muted-foreground">{request.date}</p>
+                            <p className="text-sm text-muted-foreground">
+                              {new Date(request.createdAt).toLocaleString('ru-RU')}
+                            </p>
                           </div>
                           <div className="text-right">
-                            <p className="font-bold text-xl text-primary">₽{request.amount}</p>
+                            <p className="font-bold text-xl text-primary">₽{(typeof request.amount === 'number' ? request.amount : 0).toFixed(2)}</p>
                             {request.status !== 'pending' && (
                               <Badge variant={request.status === 'approved' ? 'default' : 'destructive'}>
                                 {request.status === 'approved' ? 'Одобрено' : 'Отклонено'}
@@ -344,7 +348,7 @@ export default function StaffPanel({ onLogout }: StaffPanelProps) {
                     <option value="">-- Выберите пользователя --</option>
                     {users.map((user) => (
                       <option key={user.id} value={user.id}>
-                        {user.fullName} (Баланс: {user.balance} 💎)
+                        {user.fullName} (Баланс: ₽{(typeof user.balance === 'number' ? user.balance : 0).toFixed(2)})
                       </option>
                     ))}
                   </select>
@@ -402,7 +406,7 @@ export default function StaffPanel({ onLogout }: StaffPanelProps) {
                           </div>
                         </div>
                         <div className="text-right">
-                          <p className="font-bold text-lg">{user.balance} 💎</p>
+                          <p className="font-bold text-lg">₽{(typeof user.balance === 'number' ? user.balance : 0).toFixed(2)}</p>
                           <Badge variant="secondary">Активен</Badge>
                         </div>
                       </div>

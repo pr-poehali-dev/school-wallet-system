@@ -46,8 +46,6 @@ export default function CrashGame({ user }: CrashGameProps) {
       setMessage('Недостаточно средств');
       return;
     }
-
-    await api.updateBalance(user.id, -bet);
     
     const random = Math.random();
     let crash;
@@ -89,8 +87,7 @@ export default function CrashGame({ user }: CrashGameProps) {
         setIsPlaying(false);
         setResult('lose');
         setMessage(`💥 Крах на ${crash.toFixed(2)}x! Вы потеряли ${bet} 💎`);
-        
-
+        api.placeCasinoBet(user.id, bet, crash, false);
       }
     }, 100);
   };
@@ -105,7 +102,7 @@ export default function CrashGame({ user }: CrashGameProps) {
     const bet = parseInt(betAmount);
     const winAmount = Math.floor(bet * multiplier);
     
-    await api.updateBalance(user.id, winAmount);
+    await api.placeCasinoBet(user.id, bet, multiplier, true);
     
     setIsPlaying(false);
     setResult('win');

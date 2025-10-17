@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import Icon from '@/components/ui/icon';
-import { storage } from '@/lib/storage';
+import { api } from '@/lib/api';
 
 interface DashboardProps {
   user: any;
@@ -14,9 +14,8 @@ export default function Dashboard({ user, onNavigate }: DashboardProps) {
   const [stats, setStats] = useState<any>({ lastVisit: null, casinoWins: 0, totalTransactions: 0 });
 
   useEffect(() => {
-    if (user) {
-      const userStats = storage.getUserStats(user.fullName);
-      setStats(userStats);
+    if (user?.id) {
+      api.getUserStats(user.id).then(setStats).catch(console.error);
     }
   }, [user]);
 
