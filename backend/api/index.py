@@ -18,18 +18,22 @@ def escape_string(s):
         return 'NULL'
     return "'" + str(s).replace("'", "''") + "'"
 
+def get_cors_headers():
+    return {
+        'Access-Control-Allow-Origin': '*',
+        'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
+        'Access-Control-Allow-Headers': 'Content-Type, X-User-Id, X-Auth-Token',
+        'Access-Control-Max-Age': '86400',
+        'Content-Type': 'application/json'
+    }
+
 def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
     method: str = event.get('httpMethod', 'GET')
     
     if method == 'OPTIONS':
         return {
             'statusCode': 200,
-            'headers': {
-                'Access-Control-Allow-Origin': '*',
-                'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
-                'Access-Control-Allow-Headers': 'Content-Type, X-User-Id',
-                'Access-Control-Max-Age': '86400'
-            },
+            'headers': get_cors_headers(),
             'body': '',
             'isBase64Encoded': False
         }
