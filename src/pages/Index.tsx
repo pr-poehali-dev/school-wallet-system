@@ -25,6 +25,8 @@ export default function Index() {
   const [isRegistering, setIsRegistering] = useState(false);
 
   const handleLogin = async () => {
+    console.log('Login clicked', { fullName, pinCode });
+    
     if (!fullName || !pinCode) {
       alert('Пожалуйста, заполните все поля');
       return;
@@ -36,16 +38,21 @@ export default function Index() {
     }
 
     try {
+      console.log('Calling api.login...');
       const userData = await api.login(fullName, pinCode);
+      console.log('Login success:', userData);
       setUser(userData);
       setIsAuthenticated(true);
       localStorage.setItem('zov_current_user', JSON.stringify(userData));
     } catch (error: any) {
+      console.error('Login error:', error);
       alert(error.message || 'Не удалось войти. Проверьте ФИО и PIN-код или зарегистрируйтесь заново');
     }
   };
 
   const handleRegister = async () => {
+    console.log('Register clicked', { fullName, pinCode });
+    
     if (!fullName || !pinCode) {
       alert('Пожалуйста, заполните все поля');
       return;
@@ -57,11 +64,14 @@ export default function Index() {
     }
 
     try {
+      console.log('Calling api.register...');
       const userData = await api.register(fullName, pinCode);
+      console.log('Register success:', userData);
       setUser(userData);
       setIsAuthenticated(true);
       localStorage.setItem('zov_current_user', JSON.stringify(userData));
     } catch (error: any) {
+      console.error('Register error:', error);
       alert(error.message || 'Не удалось зарегистрироваться. Возможно, такой пользователь уже существует');
     }
   };
